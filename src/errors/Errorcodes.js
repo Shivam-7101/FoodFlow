@@ -7,7 +7,8 @@ export const ErrorCodes = Object.freeze({
         INVALID_TOKEN: "Invalid token.",
         TOKEN_EXPIRED: "Token has expired.",
         REFRESH_TOKEN_INVALID: "Invalid refresh token.",
-        ACCOUNT_NOT_VERIFIED: "Account is not verified."
+        ACCOUNT_NOT_VERIFIED: "Account is not verified.",
+        ACCOUNT_ALREADY_EXISTS: "Account already exists."
     },
 
     USER: {
