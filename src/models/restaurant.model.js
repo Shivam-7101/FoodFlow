@@ -128,12 +128,6 @@ const restaurantSchema = new mongoose.Schema(
             min: 0
         },
 
-        deliveryTime: {
-            type: Number,
-            required: true,
-            min: 1
-        },
-
         minimumOrderAmount: {
             type: Number,
             required: true,
@@ -151,13 +145,9 @@ const restaurantSchema = new mongoose.Schema(
     }
 );
 
-restaurantSchema.index({
-    ownerId: 1
-});
 
-restaurantSchema.index({
-    status: 1
-});
+
+
 
 restaurantSchema.index({
     "address.city": 1

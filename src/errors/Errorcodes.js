@@ -5,10 +5,16 @@ export const ErrorCodes = Object.freeze({
         EMAIL_ALREADY_EXISTS: "Email already registered.",
         PHONE_ALREADY_EXISTS: "Phone already registered.",
         INVALID_TOKEN: "Invalid token.",
+        INVALID_ACCESS_TOKEN: "Invalid access token.",
+        INVALID_REFRESH_TOKEN: "Invalid refresh token.",
         TOKEN_EXPIRED: "Token has expired.",
-        REFRESH_TOKEN_INVALID: "Invalid refresh token.",
         ACCOUNT_NOT_VERIFIED: "Account is not verified.",
-        ACCOUNT_ALREADY_EXISTS: "Account already exists."
+        ACCOUNT_ALREADY_EXISTS: "Account already exists.",
+        ACCOUNT_BLOCKED: "Account had been blocked."
+    },
+    SESSION: {
+        SESSION_NOT_FOUND: 'Invalid session id or, session is revoked.',
+        SESSION_INVALID: 'session revoked.'
     },
 
     USER: {

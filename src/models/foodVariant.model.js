@@ -79,9 +79,7 @@ const foodVariantSchema = new mongoose.Schema(
     }
 );
 
-foodVariantSchema.index({
-    foodId: 1
-});
+
 
 export const FoodVariant = mongoose.model("FoodVariant", foodVariantSchema);
 

@@ -1,3 +1,5 @@
+import ms from 'ms'
+
 export const USER_ROLE = Object.freeze({
     CUSTOMER: "CUSTOMER",
     RESTAURANT_OWNER: "RESTAURANT_OWNER",
@@ -74,3 +76,10 @@ export const RESTAURANT_STATUS = Object.freeze({
 
     REJECTED: "REJECTED"
 });
+
+export const COOKIE_OPTIONS = {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'strict',
+    maxAge: ms(process.env.JWT_REFRESH_TOKEN_EXPIRY)
+}

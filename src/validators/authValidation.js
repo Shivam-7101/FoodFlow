@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import * as constants from '../constants.js'
+import { isValidObjectId } from 'mongoose'
 
 export const signup = z.object({
     name: z.string({ error: "Name is required" })
@@ -18,7 +20,7 @@ export const signup = z.object({
         .trim()
         .min(10, "Invalid phone number"),
 
-    role: z.enum(USER_ROLES).default("CUSTOMER"),
+    role: z.enum(constants.USER_ROLE).default("CUSTOMER"),
 
     isVerified: z.boolean().default(false),
 });
@@ -30,5 +32,6 @@ export const login = z.object({
         .lowercase()
         .email("Invalid email address"),
 
-    password: z.string({ error: "Password is required" })
+    password: z.string({ error: "Password is required" }),
+    deviceId: z.string().trim().min(3)
 });

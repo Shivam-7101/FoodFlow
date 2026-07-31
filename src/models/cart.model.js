@@ -51,8 +51,6 @@ const cartSchema = new mongoose.Schema(
     }
 );
 
-cartSchema.index({
-    userId: 1
-});
+
 
 export const Cart = mongoose.model("Cart", cartSchema);

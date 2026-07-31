@@ -4,7 +4,8 @@ import { BaseError, ConflictError, ErrorCodes, InternalServerError, Unauthorized
 
 export const errorMiddleware = async (err, req, res, next) => {
 
-    const error = {}
+    let error = {}
+    console.log(err.stack)
 
     if (err instanceof BaseError) {
         error = err
@@ -27,8 +28,9 @@ export const errorMiddleware = async (err, req, res, next) => {
     return res
         .status(error.statusCode || 500)
         .json({
+            success: false,
+            name: error.name,
             message: error.message,
-            errors: [...error?.errors],
-            name: error.name
+            errors: error?.errors ? [...error.errors] : []
         })
 }

@@ -46,6 +46,10 @@ const userSchema = new mongoose.Schema(
         isVerified: {
             type: Boolean,
             default: false
+        },
+        isActive: {
+            type: Boolean,
+            default: true
         }
     },
     {
@@ -59,8 +63,8 @@ userSchema.pre('save', async function () {
     this.password = await bcrypt.hash(this.password, 10)
 })
 
-userSchema.methods.isPasswordCorrect = function (password) {
-    return bcrypt.compare(password, this.password)
+userSchema.methods.isPasswordCorrect = async function (password) {
+    return await bcrypt.compare(password, this.password)
 }
 
 export const User = mongoose.model("User", userSchema);
