@@ -33,8 +33,8 @@ export const login = async ({ body, userAgent, ipAddress }) => {
 
     const data = result.data
     const user = await User.findOne({ email: data.email }).select('+password')
-    if (!user) throw new NotFoundError(ErrorCodes.AUTH.USER_NOT_FOUND);
-    if (! await user.isPasswordCorrect(data.password)) throw new BadRequestError(ErrorCodes.AUTH.INVALID_CREDENTIALS);
+    if (!user) throw new UnauthorizedError(ErrorCodes.AUTH.INVALID_CREDENTIALS);
+    if (! await user.isPasswordCorrect(data.password)) throw new UnauthorizedError(ErrorCodes.AUTH.INVALID_CREDENTIALS);
     if (!user.isActive) throw new BadRequestError(ErrorCodes.AUTH.ACCOUNT_BLOCKED);
 
     const parser = new UAParser(userAgent)
