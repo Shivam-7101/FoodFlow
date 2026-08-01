@@ -12,6 +12,7 @@ export const ErrorCodes = Object.freeze({
         ACCOUNT_ALREADY_EXISTS: "Account already exists.",
         ACCOUNT_BLOCKED: "Account had been blocked."
     },
+
     SESSION: {
         SESSION_NOT_FOUND: 'Invalid session id or, session is revoked.',
         SESSION_INVALID: 'session revoked.'
@@ -28,7 +29,8 @@ export const ErrorCodes = Object.freeze({
     RESTAURANT: {
         RESTAURANT_NOT_FOUND: "Restaurant not found.",
         RESTAURANT_NOT_ACTIVE: "Restaurant is not active.",
-        RESTAURANT_CLOSED: "Restaurant is currently closed."
+        RESTAURANT_CLOSED: "Restaurant is currently closed.",
+        RESTAURANT_ALREADY_EXISTS: "Restaurant already exists."
     },
 
     FOOD: {
@@ -82,5 +84,14 @@ export const ErrorCodes = Object.freeze({
     COMMON: {
         SOMETHING_WENT_WRONG:
             "Something went wrong."
+    },
+
+    IMAGE: {
+        INVALID_MIME_TYPE: 'Invalid file type. Only JPEG, PNG, and WEBP are allowed.',
+        INVALID_BUFFER: 'Invalid image buffer.',
+        CLOUDINARY_UPLOAD_FAILED: 'Cloudinary image upload failed.',
+        CLOUDINARY_UPLOAD_RESULT_FAILED: 'Cloudinary image upload failed to generate result.',
+        INVALID_PUBLIC_ID: 'Invalid public id.',
+        IMAGE_NOT_FOUND: "Upload mandatory images.",
     }
 });

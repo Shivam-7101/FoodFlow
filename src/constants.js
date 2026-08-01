@@ -67,6 +67,15 @@ export const VEHICLE_TYPE = Object.freeze({
     BICYCLE: "BICYCLE"
 });
 
+export const DELIVERY_PARTNER_STATUS = Object.freeze({
+    PENDING: "PENDING",
+
+    ACTIVE: "ACTIVE",
+
+    SUSPENDED: "SUSPENDED",
+
+    REJECTED: "REJECTED"
+});
 export const RESTAURANT_STATUS = Object.freeze({
     PENDING: "PENDING",
 
@@ -83,3 +92,5 @@ export const COOKIE_OPTIONS = {
     sameSite: 'strict',
     maxAge: ms(process.env.JWT_REFRESH_TOKEN_EXPIRY)
 }
+
+export const ALLOWED_MIME_TYPE = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']

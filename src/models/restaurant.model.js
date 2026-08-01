@@ -106,6 +106,10 @@ const restaurantSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
+        isActive: {
+            type: Boolean,
+            default: false
+        },
 
         status: {
             type: String,
@@ -113,6 +117,9 @@ const restaurantSchema = new mongoose.Schema(
             default: "PENDING",
             required: true,
             index: true
+        },
+        rejectionReason:{
+            type:String,
         },
 
         rating: {
@@ -156,5 +163,6 @@ restaurantSchema.index({
 restaurantSchema.index({
     rating: -1
 });
+restaurantSchema.index({userId:1,name:1},{unique:true,partialFilterExpression:{status:'ACTIVE'}})
 
 export const Restaurant = mongoose.model("Restaurant", restaurantSchema);

@@ -2,5 +2,7 @@ import ApiResponse from './ApiResponse.js'
 import { asyncHandler } from './asyncHandler.js'
 import * as tokens from './tokens.js'
 import * as otp from './generateOtp.js'
+import * as cloudinary from './cloudinary.js'
+import { withCloudinaryCleanup } from './withCloudinaryCleanup.js'
 
-export { ApiResponse, asyncHandler, tokens, otp }
+export { ApiResponse, asyncHandler, tokens, otp, cloudinary, withCloudinaryCleanup }

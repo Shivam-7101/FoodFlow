@@ -2,12 +2,12 @@ import mongoose from 'mongoose'
 
 export const imageSchema = new mongoose.Schema(
     {
-        publicId: {
+        public_id: {
             type: String,
             required: true,
             trim: true
         },
-        url: {
+        secure_url: {
             type: String,
             required: true,
             trim: true

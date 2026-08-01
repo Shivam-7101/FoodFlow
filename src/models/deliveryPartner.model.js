@@ -67,7 +67,7 @@ const deliveryPartnerSchema = new mongoose.Schema(
 
         currentStatus: {
             type: String,
-            enum:  Object.values(constants.DELIVERY_STATUS),
+            enum: Object.values(constants.DELIVERY_STATUS),
             default: "OFFLINE"
         },
 
@@ -85,6 +85,18 @@ const deliveryPartnerSchema = new mongoose.Schema(
         documents: {
             type: [documentSchema],
             default: []
+        },
+
+        status: {
+            type: String,
+            enum: Object.values(constants.DELIVERY_PARTNER_STATUS),
+            default: "PENDING",
+            required: true,
+            index: true
+        },
+
+        rejectionReason: {
+            type: String,
         },
 
         rating: {
