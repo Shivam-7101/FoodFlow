@@ -10,7 +10,8 @@ export const ErrorCodes = Object.freeze({
         TOKEN_EXPIRED: "Token has expired.",
         ACCOUNT_NOT_VERIFIED: "Account is not verified.",
         ACCOUNT_ALREADY_EXISTS: "Account already exists.",
-        ACCOUNT_BLOCKED: "Account had been blocked."
+        ACCOUNT_BLOCKED: "Account had been blocked.",
+        UNAUTHORIZED_ROLE: 'Not authorized to perform these actions.'
     },
 
     SESSION: {
