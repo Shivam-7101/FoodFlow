@@ -4,8 +4,9 @@ import { BadRequestError, ConflictError, ErrorCodes, ValidationError } from '../
 import * as utils from '../utils/index.js'
 import mongoose, { mongo } from 'mongoose'
 import * as mapper from '../mapper/index.js'
+import * as queue from '../queues/index.js'
 
-export const createRestaurant = async ({ userId, restaurantBody, files }) => {
+export const createRestaurant = async ({ userId, email,name, restaurantBody, files }) => {
 
     restaurantBody.address = JSON.parse(restaurantBody.address)
     restaurantBody.openingHours = JSON.parse(restaurantBody.openingHours)
@@ -59,6 +60,7 @@ export const createRestaurant = async ({ userId, restaurantBody, files }) => {
             ownerId: userId
         })
     })
+    await queue.emailQueue.add('restaurant-creation-request-notification', { to: email, name: name, subject: 'Restaurant creation request.' })
 
-    return  mapper.restaurantMapper(restaurant)
+    return mapper.restaurantMapper(restaurant)
 }

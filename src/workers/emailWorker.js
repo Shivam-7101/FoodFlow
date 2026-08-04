@@ -14,7 +14,7 @@ export const emailWorker = new Worker(
                 const { to, userId, subject } = job.data || {}
                 if (!to || !userId || !subject) throw new Error(`EMAIL WORKER ERR: missing required parameters, job id: ${job.id}`);
 
-                console.log(`TO: ${to}, USERID: ${userId}, SUBJECT: ${subject}`)
+                // console.log(`TO: ${to}, USERID: ${userId}, SUBJECT: ${subject}`)
                 // console.log('3. ALL PARAMETERS VERIFIED BY THE WORKER')
                 const otp = utils.otp.generateOtp()
                 // console.log(`4. OTP GENERATED : ${otp}`)
@@ -35,6 +35,14 @@ export const emailWorker = new Worker(
                 // console.log('6. EMAIL SENDING FROM WORKER TO NODE-MAILER')
                 await sendEmail({ to, subject, text: otpHtml })
                 // console.log('8. EMAIL HAS BEEN SENT TO USER')
+                break;
+            }
+            case 'restaurant-creation-request-notification': {
+                const { to, name, subject } = job.data || {}
+                if (!to || !name || !subject) throw new Error(`EMAIL WORKER ERR: missing required parameters, job id: ${job.id}`);
+
+                await sendEmail({ to, subject, text: `Hello ${name}, your restaurant creation request has been submitted successfully. We will review your application and notify you once it is approved.` })
+
                 break;
             }
             default:

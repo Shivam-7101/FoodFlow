@@ -10,11 +10,11 @@ cloudinary.config({
 export const uploadImage = (buffer, folder = 'images') => {
 
     if (!Buffer.isBuffer(buffer)) throw new BadRequestError(ErrorCodes.IMAGE.INVALID_BUFFER);
-    console.log(`1. upload image called`)
+    // console.log(`1. upload image called`)
     return new Promise((resolve, reject) => {
-        console.log(`2. creating upload stream`)
+        // console.log(`2. creating upload stream`)
         const stream = cloudinary.uploader.upload_stream({ folder }, (error, result) => {
-            console.log(`3. callback executed`)
+            // console.log(`3. callback executed`)
             if (error) {
                 console.log(`CLOUDINARY ERROR: ${error}`)
                 return reject(new InternalServerError(ErrorCodes.IMAGE.CLOUDINARY_UPLOAD_FAILED));
@@ -28,9 +28,9 @@ export const uploadImage = (buffer, folder = 'images') => {
                 public_id: result.public_id
             })
         })
-        console.log(`4. writing buffer`)
+        // console.log(`4. writing buffer`)
         stream.end(buffer)
-        console.log(`5. buffer written`)
+        // console.log(`5. buffer written`)
     })
 }
 
