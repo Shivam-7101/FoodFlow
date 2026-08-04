@@ -9,6 +9,10 @@ const foodSchema = new mongoose.Schema(
             required: true,
             index: true
         },
+        isActive: {
+            type: Boolean,
+            default: false
+        },
 
         category: {
             type: String,

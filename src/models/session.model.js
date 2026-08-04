@@ -53,7 +53,7 @@ sessionSchema.pre('save', async function () {
 })
 
 sessionSchema.methods.isHashedRefreshTokenCorrect = async function (refreshToken) {
-    console.log(refreshToken)
+    // console.log(refreshToken)
     return await bcrypt.compare(refreshToken, this.hashedRefreshToken)
 }
 

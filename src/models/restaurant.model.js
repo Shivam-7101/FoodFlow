@@ -118,9 +118,6 @@ const restaurantSchema = new mongoose.Schema(
             required: true,
             index: true
         },
-        rejectionReason:{
-            type:String,
-        },
 
         rating: {
             type: Number,

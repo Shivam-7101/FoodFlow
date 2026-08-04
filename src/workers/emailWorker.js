@@ -45,8 +45,44 @@ export const emailWorker = new Worker(
 
                 break;
             }
-            default:
+            case 'restaurantCreationApproved': {
+                const { to, name, restaurantName, subject } = job.data || {}
+
+                if (!to || !name || !restaurantName || !subject) throw new Error(`EMAIL WORKER ERR: missing required parameters, job id: ${job.id}`);
+
+                await sendEmail({ to, subject, text: `Hello ${name}, your restaurant creation request for ${restaurantName} has been approved.` })
                 break;
+            }
+            case 'accountBlocked': {
+                const { to, name, subject } = job.data || {}
+                if (!to || !name || !subject) throw new Error(`EMAIL WORKER ERR: missing required parameters, job id: ${job.id}`);
+
+                await sendEmail({ to, subject, text: `Hello ${name}, your account has been blocked.` })
+                break;
+            }
+            case 'deliveryPartnerCreationApproved': {
+                const { to, name, subject } = job.data || {}
+                if (!to || !name || !subject) throw new Error(`EMAIL WORKER ERR: missing required parameters, job id: ${job.id}`);
+
+                await sendEmail({ to, subject, text: `Hello ${name}, your delivery partner creation request has been approved.` })
+                break;
+            }
+            case 'restaurantOwnerStatusRemoved': {
+                const { to, name, subject } = job.data || {}
+                if (!to || !name || !subject) throw new Error(`EMAIL WORKER ERR: missing required parameters, job id: ${job.id}`);
+
+                await sendEmail({ to, subject, text: `Hello ${name}, your restaurant owner status has been removed and your restaurant has been suspended.` })
+                break;
+            }
+            case 'deliveryPartnerStatusRemoved': {
+                const { to, name, subject } = job.data || {}
+                if (!to || !name || !subject) throw new Error(`EMAIL WORKER ERR: missing required parameters, job id: ${job.id}`);
+
+                await sendEmail({ to, subject, text: `Hello ${name}, your delivery partner status has been removed and your delivery partner account has been suspended.` })
+                break;
+            }
+            default:
+                throw new Error(`EMAIL WORKER ERR: unknown job type, job id: ${job.id}`);
         }
     },
     {

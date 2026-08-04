@@ -95,10 +95,6 @@ const deliveryPartnerSchema = new mongoose.Schema(
             index: true
         },
 
-        rejectionReason: {
-            type: String,
-        },
-
         rating: {
             type: Number,
             default: 0,
