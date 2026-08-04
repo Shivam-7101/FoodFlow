@@ -37,3 +37,17 @@ export const logoutFromAllDevices = utils.asyncHandler(async (req, res) => {
 
     res.status(200).clearCookie('refreshToken', constants.COOKIE_OPTIONS).json(new utils.ApiResponse(200, {}, 'logout from all devices successfully.'))
 })
+
+export const verifyEmailRequest = utils.asyncHandler(async (req, res) => {
+
+    await authServices.verifyEmailRequest({ userId: req.auth.user._id, email: req.auth.user.email })
+
+    res.status(200).json(new utils.ApiResponse(200, {}, 'check your inbox or spam for otp.'))
+})
+
+export const verifyEmailVerificationOtp = utils.asyncHandler(async (req, res) => {
+
+    await authServices.verifyEmailVerificationOtp({ userId: req.auth.user._id, otp: req.body.otp })
+
+    res.status(200).json(new utils.ApiResponse(200, {}, 'email has been verified successfully.'))
+})

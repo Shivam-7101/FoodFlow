@@ -4,5 +4,6 @@ import * as tokens from './tokens.js'
 import * as otp from './generateOtp.js'
 import * as cloudinary from './cloudinary.js'
 import { withCloudinaryCleanup } from './withCloudinaryCleanup.js'
+import * as redis from './redis.js'
 
-export { ApiResponse, asyncHandler, tokens, otp, cloudinary, withCloudinaryCleanup }
+export { ApiResponse, asyncHandler, tokens, otp, cloudinary, withCloudinaryCleanup, redis }

@@ -1,4 +1,4 @@
-import { BadRequestError, ConflictError, ErrorCodes, NotFoundError, UnauthorizedError, ValidationError } from '../errors/index.js'
+import { BadRequestError, ConflictError, ErrorCodes, InternalServerError, NotFoundError, UnauthorizedError, ValidationError } from '../errors/index.js'
 import { User, Session } from '../models/index.js'
 import * as authValidation from '../validators/authValidation.js'
 import { userMapper } from '../mapper/user.mapper.js'
@@ -6,6 +6,7 @@ import * as utils from '../utils/index.js'
 import { UAParser } from 'ua-parser-js'
 import ms from 'ms'
 import mongoose from 'mongoose'
+import * as queue from '../queues/index.js'
 
 export const signup = async ({ body }) => {
 
@@ -164,4 +165,49 @@ export const logoutFromAllDevices = async ({ userId, sessionId }) => {
             }
         }
     )
+}
+
+export const verifyEmailRequest = async ({ userId, email }) => {
+
+    try {
+        // console.log('1. EMAIL VERIFICATION REQUEST COMES')
+        await queue.emailQueue.add('email-verification', { to: email, userId: userId, subject: 'FOOD FLOW: verify your email.' })
+        // console.log('9. EMAIL SENT TO USER')
+
+        return
+    } catch (error) {
+        throw new InternalServerError(`EMAIL QUEUE ERR: Failed to add email to queue`)
+    }
+}
+
+export const verifyEmailVerificationOtp = async ({ userId, otp }) => {
+
+    if (!otp?.trim()) throw new BadRequestError(ErrorCodes.VERIFICATION.INVALID_OTP);
+
+    const storedOtp = await utils.redis.getString({ prefix: 'otp', id: userId })
+    if (!storedOtp) throw new BadRequestError(ErrorCodes.VERIFICATION.OTP_EXPIRED);
+    if (storedOtp !== otp.toString()) throw new BadRequestError(ErrorCodes.VERIFICATION.INVALID_OTP);
+    // await utils.redis.deleteStringKey({ prefix: 'otp', id: userId })
+
+    const user = await User.findOneAndUpdate(
+        {
+            _id: userId,
+            isVerified: false
+        },
+        {
+            $set: {
+                isVerified: true
+            }
+        },
+        {
+            returnDocument: "after"
+        }
+    )
+    if (!user) {
+        const existingUser = await User.findById(userId)
+        if (existingUser?.isVerified) {
+            return
+        }
+        throw new BadRequestError(ErrorCodes.VERIFICATION.INVALID_OTP)
+    }
 }

@@ -1,6 +1,7 @@
+import dotenv from 'dotenv/config'
 import nodemailer from 'nodemailer'
 
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         type: 'OAuth2',
@@ -19,13 +20,15 @@ transporter.verify((error, success) => {
     }
 })
 
-export const sendEmail = async (to, subject, text) => {
+export const sendEmail = async ({ to, subject, text }) => {
     const mailOptions = {
         from: process.env.GOOGLE_USER,
         to,
         subject,
         text
     }
+
+    // console.log(`7. DETAILS OF USER=> FROM: ${mailOptions.from}, TO: ${mailOptions.to}, SUBJECT: ${mailOptions.subject}`)
 
     try {
         await transporter.sendMail(mailOptions)
