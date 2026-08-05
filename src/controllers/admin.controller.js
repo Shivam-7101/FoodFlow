@@ -1,9 +1,3 @@
-//APPROVE THE RESTAURANT CREATION REQUEST 
-//APPROVE THE DELIVERY PARTNER REQUEST
-//MARK THE USER INACTIVE
-//UPDATE THE STATUS OF RESTAURANT
-//UPDATE THE STATUS OF DELIVERY PARTNER
-
 import * as utils from '../utils/index.js'
 import * as adminServices from '../services/admin.services.js'
 import mongoose from 'mongoose'

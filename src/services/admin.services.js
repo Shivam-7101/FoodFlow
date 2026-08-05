@@ -299,6 +299,7 @@ export const removeRestaurantOwnerStatus = async ({ body }) => {
     } finally {
         await session.endSession()
     }
+    await queue.restaurantReactivateQueue.add('reactivateRestaurant', { restaurantId })
     await queue.emailQueue.add('restaurantOwnerStatusRemoved', { to: ownerEmail, name: ownerName, subject: 'Restaurant Owner Status Removed and Restaurant Suspended' })
 }
 
@@ -363,5 +364,6 @@ export const removeDeliveryPartnerStatus = async ({ body }) => {
     } finally {
         await session.endSession()
     }
+    await queue.deliveryPartnerReactivateQueue.add('reactivateDeliveryPartner', { deliveryPartnerId })
     await queue.emailQueue.add('deliveryPartnerStatusRemoved', { to: userEmail, name: userName, subject: 'Delivery Partner Status Removed and Delivery Partner Suspended' })
 }

@@ -71,7 +71,7 @@ export const emailWorker = new Worker(
                 const { to, name, subject } = job.data || {}
                 if (!to || !name || !subject) throw new Error(`EMAIL WORKER ERR: missing required parameters, job id: ${job.id}`);
 
-                await sendEmail({ to, subject, text: `Hello ${name}, your restaurant owner status has been removed and your restaurant has been suspended.` })
+                await sendEmail({ to, subject, text: `Hello ${name}, your restaurant owner status has been removed and your restaurant has been suspended for 3 days.` })
                 break;
             }
             case 'deliveryPartnerStatusRemoved': {
@@ -79,6 +79,18 @@ export const emailWorker = new Worker(
                 if (!to || !name || !subject) throw new Error(`EMAIL WORKER ERR: missing required parameters, job id: ${job.id}`);
 
                 await sendEmail({ to, subject, text: `Hello ${name}, your delivery partner status has been removed and your delivery partner account has been suspended.` })
+                break;
+            }
+            case 'restaurantReactivated': {
+                const { to, name, subject } = job.data || {}
+                if (!to || !name || !subject) throw new Error(`EMAIL WORKER ERR: missing required parameters, job id: ${job.id}`);
+                await sendEmail({ to, subject, text: `Hello ${name}, your restaurant has been reactivated.` })
+                break;
+            }
+            case 'deliveryPartnerReactivated': {
+                const { to, name, subject } = job.data || {}
+                if (!to || !name || !subject) throw new Error(`EMAIL WORKER ERR: missing required parameters, job id: ${job.id}`);
+                await sendEmail({ to, subject, text: `Hello ${name}, your delivery partner account has been reactivated.` })
                 break;
             }
             default:
