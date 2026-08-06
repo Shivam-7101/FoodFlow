@@ -29,7 +29,7 @@ export const ErrorCodes = Object.freeze({
 
     RESTAURANT: {
         RESTAURANT_NOT_FOUND: "Restaurant not found.",
-        RESTAURANT_NOT_ACTIVE: "Restaurant is not active.",
+        RESTAURANT_NOT_ACTIVE: "Restaurant id have been suspended or rejected.",
         RESTAURANT_CLOSED: "Restaurant is currently closed.",
         RESTAURANT_ALREADY_EXISTS: "Restaurant already exists."
     },
