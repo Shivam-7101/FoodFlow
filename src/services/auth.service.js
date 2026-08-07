@@ -211,3 +211,18 @@ export const verifyEmailVerificationOtp = async ({ userId, otp }) => {
         throw new BadRequestError(ErrorCodes.VERIFICATION.INVALID_OTP)
     }
 }
+
+export const changePassword = async ({ userId, oldPassword, newPassword }) => {
+
+    const result = authValidation.changePassword.safeParse({ newPassword, oldPassword })
+    if (!result.success) throw new ValidationError(ErrorCodes.VALIDATION.INVALID_INPUT);
+    const data = result.data
+
+    const user = await User.findById(userId).select('+password')
+    if (!user) throw new NotFoundError(ErrorCodes.AUTH.USER_NOT_FOUND);
+    if (! await user.isPasswordCorrect(data.oldPassword)) {
+        throw new BadRequestError(ErrorCodes.AUTH.INVALID_OLD_PASSWORD)
+    }
+    user.password = data.newPassword;
+    await user.save()
+}

@@ -11,6 +11,9 @@ export const errorMiddleware = async (err, req, res, next) => {
         error = err
         error.message = err.message
     } else if (err.code === 11000) {
+        error = new ConflictError('The document was modified by another request. Please try again.');
+    } else if (err instanceof ZodError) {
+    } else if (err.name === 'VersionError') {
         error = new ConflictError(ErrorCodes.AUTH.ACCOUNT_ALREADY_EXISTS);
     } else if (err instanceof ZodError) {
         error = new ValidationError(ErrorCodes.VALIDATION.INVALID_INPUT);

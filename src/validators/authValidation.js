@@ -35,3 +35,8 @@ export const login = z.object({
     password: z.string({ error: "Password is required" }),
     deviceId: z.string().trim().min(3)
 });
+
+export const changePassword = z.object({
+    oldPassword: z.string({ error: "old password is required" }).trim(),
+    newPassword: z.string({ error: "Password is required" }).min(6, "Password must be at least 6 characters")
+})

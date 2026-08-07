@@ -18,3 +18,5 @@ authRouter.post('/logout-all-devices', authenticate, authController.logoutFromAl
 authRouter.post('/verify', authenticate, authorizeRoles('CUSTOMER'), authController.verifyEmailRequest)
 
 authRouter.post('/verify/otp', authenticate, authorizeRoles('CUSTOMER'), authController.verifyEmailVerificationOtp)
+
+authRouter.post('/password', authenticate, authController.changePassword)

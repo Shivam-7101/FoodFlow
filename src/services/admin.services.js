@@ -91,7 +91,8 @@ export const approveRestaurantCreationRequests = async () => {
                         },
                         update: {
                             $set: {
-                                status: shouldApprove ? 'ACTIVE' : 'REJECTED'
+                                status: shouldApprove ? 'ACTIVE' : 'REJECTED',
+                                isActive: shouldApprove
                             }
                         }
                     }

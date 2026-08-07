@@ -1,6 +1,7 @@
 export const ErrorCodes = Object.freeze({
     AUTH: {
         INVALID_CREDENTIALS: "Invalid email or password.",
+        INVALID_OLD_PASSWORD: "Invalid old password.",
         USER_NOT_FOUND: "User not found.",
         EMAIL_ALREADY_EXISTS: "Email already registered.",
         PHONE_ALREADY_EXISTS: "Phone already registered.",

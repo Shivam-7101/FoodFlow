@@ -51,3 +51,12 @@ export const verifyEmailVerificationOtp = utils.asyncHandler(async (req, res) =>
 
     res.status(200).json(new utils.ApiResponse(200, {}, 'email has been verified successfully.'))
 })
+
+export const changePassword = utils.asyncHandler(async (req, res) => {
+
+    console.log(`OLD PASSWORD: ${req.body.oldPassword}`)
+    console.log(`NEW PASSWORD: ${req.body.newPassword}`)
+    await authServices.changePassword({ oldPassword: req.body.oldPassword, newPassword: req.body.newPassword, userId: req.auth.user._id })
+
+    res.status(200).json(new utils.ApiResponse(200, {}, 'password changed successfully.'))
+})

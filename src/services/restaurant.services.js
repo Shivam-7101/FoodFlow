@@ -92,8 +92,9 @@ export const updateRestaurant = async ({ userId, restaurantId, restaurantBody, f
         if (files?.banner?.[0]) {
             banner = await utils.cloudinary.uploadOne(files.banner[0], 'banners')
             if (banner) {
-                if (!restaurant.banner) return;
-                await utils.cloudinary.deleteOne(restaurant.banner.public_id)
+                if (restaurant.banner) {
+                    await utils.cloudinary.deleteOne(restaurant.banner.public_id)
+                }
             }
         }
         trackUploads([logo, banner].filter(Boolean))
@@ -102,7 +103,7 @@ export const updateRestaurant = async ({ userId, restaurantId, restaurantBody, f
             {
                 _id: restaurantId,
                 ownerId: userId,
-                role: 'ACTIVE'
+                status: 'ACTIVE'
             },
             {
                 $set: {
@@ -113,7 +114,7 @@ export const updateRestaurant = async ({ userId, restaurantId, restaurantBody, f
                     minimumOrderAmount: data.minimumOrderAmount,
                     deliveryFee: data.deliveryFee,
                     logo: logo || restaurant.logo,
-                    banner: banner || restaurant.banner
+                    banner: banner || restaurant.banner,
                 }
             },
             {
@@ -146,7 +147,7 @@ export const deleteRestaurant = async ({ userId, restaurantId }) => {
                 {
                     _id: restaurantId,
                     ownerId: userId,
-                    role: {
+                    status: {
                         $in: ['ACTIVE', 'SUSPENDED']
                     }
                 },
@@ -163,7 +164,7 @@ export const deleteRestaurant = async ({ userId, restaurantId }) => {
             if (!restaurant) {
                 const existingRestaurant = await Restaurant.findById(restaurantId, null, { session })
                 if (!existingRestaurant) throw new NotFoundError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_FOUND);
-                if (existingRestaurant.role !== 'ACTIVE' || existingRestaurant.role !== 'SUSPENDED') throw new ForbiddenError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_ACTIVE);
+                if (existingRestaurant.status !== 'ACTIVE' || existingRestaurant.status !== 'SUSPENDED') throw new ForbiddenError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_ACTIVE);
 
                 returnableRestaurant = existingRestaurant
             } else {
@@ -190,7 +191,7 @@ export const deleteRestaurant = async ({ userId, restaurantId }) => {
     }
 }
 
-export const getRestaurantForOwner = async ({ userId, restaurantId }) => {
+export const getRestaurant = async ({ userId, restaurantId }) => {
     const restaurant = await Restaurant.findOne({
         _id: restaurantId,
         ownerId: userId,
@@ -200,73 +201,4 @@ export const getRestaurantForOwner = async ({ userId, restaurantId }) => {
     if (!restaurant) throw new NotFoundError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_FOUND);
 
     return mapper.restaurantMapper(restaurant)
-}
-
-export const getRestaurantForCustomer = async ({ restaurantId }) => {
-
-    const restaurant = await Restaurant.aggregate([
-        {
-            $match: {
-                _id: restaurantId,
-                status: "ACTIVE",
-                isActive: true
-            }
-        },
-        {
-            $lookup: {
-                from: "foods",
-                let: { rId: '$_id' },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $eq: ['$restaurantId', '$$rId']
-                            },
-                            isActive: true,
-                            isAvailable: true
-                        }
-                    },
-                    {
-                        $sort: {
-                            createdAt: -1
-                        }
-                    },
-                    {
-                        $limit: 10
-                    },
-                    {
-                        $project: {
-                            _id: 0,
-                            category: 1,
-                            name: 1,
-                            images: 1,
-                            isVeg: 1,
-                            variants: 1
-                        }
-                    }
-                ],
-                as: 'foods'
-            }
-        },
-        {
-            $project: {
-                _id: 0,
-                name: 1,
-                description: 1,
-                logo: 1,
-                banner: 1,
-                address: 1,
-                openingHours: 1,
-                isOpen: 1,
-                ratings: 1,
-                totalRatings: 1,
-                createdAt: 1,
-                foods: 1
-            }
-        }
-    ])
-
-    if (!restaurant.length) throw new NotFoundError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_FOUND);
-
-    return restaurant?.[0]
 }
