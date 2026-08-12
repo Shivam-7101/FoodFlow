@@ -93,4 +93,6 @@ export const COOKIE_OPTIONS = {
     maxAge: ms(process.env.JWT_REFRESH_TOKEN_EXPIRY)
 }
 
+export const FOOD_CATEGORY = ['NOODLES', 'BEVERAGES', 'PASTA', 'PIZZA', 'BURGER', 'ICE CREAMS', 'SWEETS', 'CHAPATIS', 'RICE', 'CURRY', 'SALAD']
+
 export const ALLOWED_MIME_TYPE = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']

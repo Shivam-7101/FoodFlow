@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import { Food } from './food.model.js'
+import * as utils from '../utils/index.js'
 
 const attributeSchema = new mongoose.Schema(
     {
@@ -57,6 +59,10 @@ const foodVariantSchema = new mongoose.Schema(
             type: [attributeSchema],
             default: []
         },
+        expiresAt: {
+            type: Date,
+            expires: 0
+        },
 
         price: {
             type: priceSchema,
@@ -79,7 +85,30 @@ const foodVariantSchema = new mongoose.Schema(
     }
 );
 
+foodVariantSchema.post('save', async function (doc) {
 
+    await utils.updatePriceSummary(doc.foodId)
+})
+
+foodVariantSchema.post(['updateOne', 'findOneAndUpdate'], async function () {
+    const data = this.getQuery()
+    if (data._id) {
+        const variant = await this.model.findById(data._id).select('foodId')
+        if (variant) await utils.updatePriceSummary(variant.foodId);
+    } else if (data.foodId) {
+        await utils.updatePriceSummary(data.foodId);
+    }
+})
+
+foodVariantSchema.post(['deleteOne', 'findOneAndDelete'], async function () {
+    const data = this.getQuery()
+    if (data._id) {
+        const variant = await this.model.findById(data._id).select('foodId')
+        if (variant) await utils.updatePriceSummary(variant.foodId);
+    } else if (data.foodId) {
+        await utils.updatePriceSummary(data.foodId);
+    }
+})
 
 export const FoodVariant = mongoose.model("FoodVariant", foodVariantSchema);
 

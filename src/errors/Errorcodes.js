@@ -95,6 +95,7 @@ export const ErrorCodes = Object.freeze({
         CLOUDINARY_UPLOAD_RESULT_FAILED: 'Cloudinary image upload failed to generate result.',
         INVALID_PUBLIC_ID: 'Invalid public id.',
         IMAGE_NOT_FOUND: "Upload mandatory images.",
+        IMAGE_IS_AN_REQUIRED_FIELD: "image is an required field.",
     },
     VERIFICATION: {
         INVALID_OTP: 'Invalid or expired otp.',

@@ -32,6 +32,8 @@ export const deleteRestaurant = utils.asyncHandler(async (req, res) => {
 
 export const getRestaurant = utils.asyncHandler(async (req, res) => {
 
+    console.log(`RESTAURANT ID: ${req.params?.id}`)
+    console.log(`USER ID: ${ req.auth.user._id}`)
     const restaurant = await restaurantServices.getRestaurant({
         userId: req.auth.user._id,
         restaurantId: req.params?.id

@@ -1,5 +1,19 @@
 import mongoose from "mongoose";
 import { imageSchema } from "./imageSchema.js";
+import * as constants from '../constants.js'
+
+const priceSummary = new mongoose.Schema({
+    minPrice: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    maxPrice: {
+        type: Number,
+        required: true,
+        min: 0
+    }
+}, { _id: false })
 
 const foodSchema = new mongoose.Schema(
     {
@@ -13,11 +27,16 @@ const foodSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
+        expiresAt: {
+            type: Date,
+            expires: 0
+        },
+        priceSummary: priceSummary,
 
         category: {
             type: String,
             required: true,
-            trim: true
+            enum: constants.FOOD_CATEGORY
         },
 
         name: {
@@ -46,14 +65,7 @@ const foodSchema = new mongoose.Schema(
         isAvailable: {
             type: Boolean,
             default: true
-        },
-
-        variants: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "FoodVariant"
-            }
-        ]
+        }
     },
     {
         timestamps: true

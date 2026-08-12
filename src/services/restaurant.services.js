@@ -195,7 +195,6 @@ export const getRestaurant = async ({ userId, restaurantId }) => {
     const restaurant = await Restaurant.findOne({
         _id: restaurantId,
         ownerId: userId,
-        status: 'ACTIVE',
         isActive: true
     })
     if (!restaurant) throw new NotFoundError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_FOUND);

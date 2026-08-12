@@ -6,6 +6,7 @@ import { restaurantRouter } from './routes/restaurant.routes.js'
 import { errorMiddleware } from './middlewares/error.middleware.js'
 import cookieParser from 'cookie-parser'
 import { adminRouter } from './routes/admin.routes.js'
+import { foodRouter } from './routes/food.routes.js'
 
 const app = express()
 
@@ -21,6 +22,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use('/api/v1/auth', authRouter)
 app.use('/api/v1/restaurants', restaurantRouter)
 app.use('/api/v1/admin', adminRouter)
+app.use('/api/v1/foods', foodRouter)
 
 app.use(errorMiddleware)
 
