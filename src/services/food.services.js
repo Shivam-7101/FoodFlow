@@ -67,8 +67,8 @@ export const updateFood = async ({ restaurantId, foodId, foodBody, files }) => {
     if (!food) throw new NotFoundError(ErrorCodes.FOOD.FOOD_NOT_FOUND);
     if (!food.isActive || !food.isAvailable) throw new ForbiddenError(ErrorCodes.FOOD.FOOD_NOT_AVAILABLE);
 
-    foodBody.variants = JSON.parse(foodBody.variants)
-    foodBody.images = JSON.parse(foodBody.images || '[]')
+    foodBody.variants = JSON.parse(foodBody.variants || [])
+    foodBody.images = JSON.parse(foodBody.images || [])
     const result = foodValidation.updateFood.safeParse(foodBody);
     if (!result.success) throw new ValidationError(`Zod Validation Error: ${JSON.stringify(result.error.format())}`);
     const data = result.data
@@ -79,6 +79,7 @@ export const updateFood = async ({ restaurantId, foodId, foodBody, files }) => {
     if (!(imagesToBeKeep.length + files.length)) throw new BadRequestError(ErrorCodes.IMAGE.IMAGE_IS_AN_REQUIRED_FIELD);
 
     const variantsToBeCreated = data.variants.filter(item => !item._id).map(item => ({ ...item, foodId: new mongoose.Types.ObjectId(foodId), isActive: food.isActive }))
+    // console.log(`VARIANTS TO BE CREATED: ${JSON.stringify(variantsToBeCreated, null, 2)}`)
     const existingVariants = new Set(data.variants.filter(item => item._id).map(item => item._id))
     const bulkVariantUpdate = data.variants.filter(item => item._id).map(item => ({
         updateOne: {
@@ -127,28 +128,9 @@ export const updateFood = async ({ restaurantId, foodId, foodBody, files }) => {
                         }
                     )
 
-                    if (variantsToBeCreated && variantsToBeCreated.length > 0) {
-                        await FoodVariant.insertMany(variantsToBeCreated, { session })
-                    }
-
                     if (bulkVariantUpdate && bulkVariantUpdate.length > 0) {
                         await FoodVariant.bulkWrite(bulkVariantUpdate, { session, ordered: true });
                     }
-                    // if (bulkVariantUpdate && bulkVariantUpdate.length > 0) {
-                    //     try {
-                    //         await FoodVariant.bulkWrite(
-                    //             bulkVariantUpdate,
-                    //             { session, ordered: true }
-                    //         );
-                    //     } catch (bulkError) {
-                    //         // 🔍 This prints out the nested, hidden DB reason (e.g. duplicate keys, schema validation failures)
-                    //         console.error("❌ --- DETAILED BULK WRITE ERROR START ---");
-                    //         console.error(JSON.stringify(bulkError, null, 2));
-                    //         console.error("❌ --- DETAILED BULK WRITE ERROR END ---");
-                    //         throw bulkError;
-                    //     }
-                    // }
-
 
                     await FoodVariant.deleteMany(
                         {
@@ -161,6 +143,11 @@ export const updateFood = async ({ restaurantId, foodId, foodBody, files }) => {
                             session
                         }
                     )
+                    if (variantsToBeCreated && variantsToBeCreated.length > 0) {
+                        const insertedVariants = await FoodVariant.insertMany(variantsToBeCreated, { session })
+                        // console.log(`INSERTED VARIANTS: ${JSON.stringify(insertedVariants, null, 2)}`)
+                    }
+
                     const variants = await FoodVariant.find({ foodId: new mongoose.Types.ObjectId(foodId) }, null, { session })
                     return { updatedFoodDetails, variants }
                 })
