@@ -175,7 +175,8 @@ export const approveDeliveryPartnerRequests = async () => {
                         },
                         update: {
                             $set: {
-                                status: shouldApproved ? 'ACTIVE' : 'REJECTED'
+                                status: shouldApproved ? 'ACTIVE' : 'REJECTED',
+                                isActive: shouldApproved ? true : false
                             }
                         }
                     }

@@ -37,7 +37,7 @@ export const emailWorker = new Worker(
                 // console.log('8. EMAIL HAS BEEN SENT TO USER')
                 break;
             }
-            case 'restaurant-creation-request-notification': {
+            case 'restaurantCreationRequest': {
                 const { to, name, subject } = job.data || {}
                 if (!to || !name || !subject) throw new Error(`EMAIL WORKER ERR: missing required parameters, job id: ${job.id}`);
 
@@ -91,6 +91,18 @@ export const emailWorker = new Worker(
                 const { to, name, subject } = job.data || {}
                 if (!to || !name || !subject) throw new Error(`EMAIL WORKER ERR: missing required parameters, job id: ${job.id}`);
                 await sendEmail({ to, subject, text: `Hello ${name}, your delivery partner account has been reactivated.` })
+                break;
+            }
+            case 'deliveryPartnerCreationRequest': {
+                const { to, name, subject } = job.data || {}
+                if (!to || !name || !subject) throw new Error(`EMAIL WORKER ERR: missing required parameters, job id: ${job.id}`);
+                await sendEmail({ to, subject, text: `Hello ${name}, your delivery partner creation request has been received.` })
+                break;
+            }
+            case 'deliveryPartnerAccountIsNowActive': {
+                const { to, name, subject } = job.data || {}
+                if (!to || !name || !subject) throw new Error(`EMAIL WORKER ERR: missing required parameters, job id: ${job.id}`);
+                await sendEmail({ to, subject, text: `Hello ${name}, your delivery partner account is now ready to get work.` })
                 break;
             }
             default:

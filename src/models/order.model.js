@@ -62,7 +62,12 @@ const shippingAddressSchema = new mongoose.Schema(
         city: String,
         state: String,
         country: String,
-        postalCode: String
+        postalCode: String,
+        location: {
+            type: { type: String, enum: ['Point'], default: 'Point' },
+            coordinates: { type: [Number], required: true } // [longitude, latitude]
+        }
+
     },
     {
         _id: false

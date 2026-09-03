@@ -1,6 +1,6 @@
 import { User, Restaurant, Food } from '../models/index.js'
 import * as restaurantValidation from '../validators/restaurantValidation.js'
-import { BadRequestError, ConflictError, ErrorCodes, ForbiddenError, NotFoundError, ValidationError } from '../errors/index.js'
+import { BadRequestError, ConflictError, ErrorCodes, ForbiddenError, InternalServerError, NotFoundError, ValidationError } from '../errors/index.js'
 import * as utils from '../utils/index.js'
 import mongoose, { mongo } from 'mongoose'
 import * as mapper from '../mapper/index.js'
@@ -60,7 +60,7 @@ export const createRestaurant = async ({ userId, email, name, restaurantBody, fi
             ownerId: userId
         })
     })
-    await queue.emailQueue.add('restaurant-creation-request-notification', { to: email, name: name, subject: 'Restaurant creation request.' })
+    await queue.emailQueue.add('restaurantCreationRequest', { to: email, name: name, subject: 'Restaurant creation request.' })
 
     return mapper.restaurantMapper(restaurant)
 }
@@ -198,6 +198,62 @@ export const getRestaurant = async ({ userId, restaurantId }) => {
         isActive: true
     })
     if (!restaurant) throw new NotFoundError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_FOUND);
+
+    return mapper.restaurantMapper(restaurant)
+}
+
+export const setRestaurantStatusToOpen = async ({ restaurantId, ownerId }) => {
+    const restaurant = await Restaurant.findOneAndUpdate(
+        {
+            _id: restaurantId,
+            ownerId: ownerId,
+            status: 'ACTIVE',
+            isActive: true
+        },
+        {
+            $set: {
+                isOpen: true
+            }
+        },
+        {
+            returnDocument: 'after'
+        }
+    )
+    if (!restaurant) {
+        const isRestaurantExists = await Restaurant.findOne({ _id: restaurantId, ownerId: ownerId })
+        if (!isRestaurantExists) throw new NotFoundError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_FOUND);
+        if (isRestaurantExists.status !== 'ACTIVE') throw new UnauthorizedError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_ACTIVE);
+        if (!isRestaurantExists.isActive) throw new ForbiddenError(ErrorCodes.RESTAURANT.RESTAURANT_DELETED);
+        if(!isRestaurantExists.isOpen)throw new InternalServerError(ErrorCodes.COMMON.SOMETHING_WENT_WRONG);
+    }
+
+    return mapper.restaurantMapper(restaurant)
+}
+
+export const setRestaurantStatusToClose = async ({ restaurantId, ownerId }) => {
+    const restaurant = await Restaurant.findOneAndUpdate(
+        {
+            _id: restaurantId,
+            ownerId: ownerId,
+            status: 'ACTIVE',
+            isActive: true
+        },
+        {
+            $set: {
+                isOpen: false
+            }
+        },
+        {
+            returnDocument: 'after'
+        }
+    )
+    if (!restaurant) {
+        const isRestaurantExists = await Restaurant.findOne({ _id: restaurantId, ownerId: ownerId })
+        if (!isRestaurantExists) throw new NotFoundError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_FOUND);
+        if (isRestaurantExists.status !== 'ACTIVE') throw new UnauthorizedError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_ACTIVE);
+        if (!isRestaurantExists.isActive) throw new ForbiddenError(ErrorCodes.RESTAURANT.RESTAURANT_DELETED);
+        if (isRestaurantExists.isOpen) throw new InternalServerError(ErrorCodes.COMMON.SOMETHING_WENT_WRONG);
+    }
 
     return mapper.restaurantMapper(restaurant)
 }

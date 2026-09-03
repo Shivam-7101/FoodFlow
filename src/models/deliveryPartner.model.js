@@ -4,12 +4,11 @@ import * as constants from '../constants.js'
 
 const documentSchema = new mongoose.Schema(
     {
-        type: {
-            type: String,
+        adhaarCard: {
+            type: imageSchema,
             required: true
         },
-
-        image: {
+        vehiclePaper: {
             type: imageSchema,
             required: true
         }
@@ -64,6 +63,10 @@ const deliveryPartnerSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
+        isActive: {
+            type: Boolean,
+            default: false
+        },
 
         currentStatus: {
             type: String,
@@ -83,8 +86,8 @@ const deliveryPartnerSchema = new mongoose.Schema(
         },
 
         documents: {
-            type: [documentSchema],
-            default: []
+            type: documentSchema,
+            required: true
         },
 
         status: {

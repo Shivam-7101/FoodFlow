@@ -7,6 +7,7 @@ import { errorMiddleware } from './middlewares/error.middleware.js'
 import cookieParser from 'cookie-parser'
 import { adminRouter } from './routes/admin.routes.js'
 import { foodRouter } from './routes/food.routes.js'
+import { deliveryPartnerRouter } from './routes/deliveryPartner.routes.js'
 
 const app = express()
 
@@ -23,6 +24,7 @@ app.use('/api/v1/auth', authRouter)
 app.use('/api/v1/restaurants', restaurantRouter)
 app.use('/api/v1/admin', adminRouter)
 app.use('/api/v1/foods', foodRouter)
+app.use('/api/v1/deliveryPartners', deliveryPartnerRouter)
 
 app.use(errorMiddleware)
 

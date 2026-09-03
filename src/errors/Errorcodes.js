@@ -15,6 +15,10 @@ export const ErrorCodes = Object.freeze({
         UNAUTHORIZED_ROLE: 'Not authorized to perform these actions.'
     },
 
+    ROLE: {
+        UNAUTHORIZED_ROLE: "RESTAURANT OWNER COULD NOT APPLY FOR DELIVERY PARTNER ROLE AND VICE A VERSA"
+    },
+
     SESSION: {
         SESSION_NOT_FOUND: 'Invalid session id or, session is revoked.',
         SESSION_INVALID: 'session revoked.'
@@ -32,7 +36,8 @@ export const ErrorCodes = Object.freeze({
         RESTAURANT_NOT_FOUND: "Restaurant not found.",
         RESTAURANT_NOT_ACTIVE: "Restaurant id have been suspended or rejected.",
         RESTAURANT_CLOSED: "Restaurant is currently closed.",
-        RESTAURANT_ALREADY_EXISTS: "Restaurant already exists."
+        RESTAURANT_ALREADY_EXISTS: "Restaurant already exists.",
+        RESTAURANT_DELETED: "Restaurant has been deleted."
     },
 
     FOOD: {
@@ -66,12 +71,14 @@ export const ErrorCodes = Object.freeze({
     },
 
     DELIVERY: {
-        DELIVERY_PARTNER_NOT_FOUND:
-            "Delivery partner not found.",
-        DELIVERY_PARTNER_BUSY:
-            "Delivery partner is currently busy.",
-        DELIVERY_PARTNER_OFFLINE:
-            "Delivery partner is offline."
+        DELIVERY_PARTNER_NOT_FOUND: "Delivery partner not found.",
+        DELIVERY_PARTNER_ACCOUNT_ALREADY_EXISTS: "Delivery partner account already exists.",
+        DELIVERY_PARTNER_BUSY: "Delivery partner is currently busy.",
+        DELIVERY_PARTNER_OFFLINE: "Delivery partner is offline.",
+        INVALID_DOCUMENTS: "Invalid documents. please upload all mentioned documents.",
+        UNAUTHORIZED_STATUS: "your delivery partner id is been suspended or rejected",
+        ACCOUNT_CREATION_REQUEST_IS_STILL_PENDING: "your request has already reached and will notify you soon.",
+        ACCOUNT_INVACTIVE: "your delivery partner id is inactive."
     },
 
     REVIEW: {

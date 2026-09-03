@@ -149,10 +149,6 @@ const restaurantSchema = new mongoose.Schema(
     }
 );
 
-
-
-
-
 restaurantSchema.index({
     "address.city": 1
 });
