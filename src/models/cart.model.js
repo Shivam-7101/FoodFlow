@@ -8,7 +8,7 @@ const cartItemSchema = new mongoose.Schema(
             required: true
         },
 
-        variantId: {
+        foodVariantId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "FoodVariant",
             required: true

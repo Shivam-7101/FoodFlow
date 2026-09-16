@@ -29,8 +29,9 @@ export const signup = async ({ body }) => {
 
 export const login = async ({ body, userAgent, ipAddress }) => {
 
+    // console.log('LOGIN BODY IN AUTH SERVICE: ', JSON.stringify(body, null, 2))
     const result = authValidation.login.safeParse(body)
-    if (!result.success) throw new ValidationError(ErrorCodes.VALIDATION.INVALID_INPUT);
+    if (!result.success) throw new ValidationError(`LOGIN ERR: ${result.error.issues.map(issue => issue.message).join(", ")}`);
 
     const data = result.data
     const user = await User.findOne({ email: data.email }).select('+password')

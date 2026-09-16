@@ -110,7 +110,7 @@ export const getFoods = utils.asyncHandler(async (req, res) => {
                             },
                             {
                                 $project: {
-                                    _id: 0,
+                                    _id: 1,
                                     name: 1,
                                     attributes: 1,
                                     price: 1,

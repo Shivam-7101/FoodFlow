@@ -6,5 +6,6 @@ import * as cloudinary from './cloudinary.js'
 import { withCloudinaryCleanup } from './withCloudinaryCleanup.js'
 import * as redis from './redis.js'
 import { updatePriceSummary } from './updatePriceSummary.js'
+import * as cache from './cache.js'
 
-export { ApiResponse, asyncHandler, tokens, otp, cloudinary, withCloudinaryCleanup, redis, updatePriceSummary }
+export { ApiResponse, asyncHandler, tokens, otp, cloudinary, withCloudinaryCleanup, redis, updatePriceSummary, cache }

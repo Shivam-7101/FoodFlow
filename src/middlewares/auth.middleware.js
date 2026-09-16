@@ -22,6 +22,8 @@ export const authenticate = utils.asyncHandler(async (req, res, next) => {
     if (!user) throw new UnauthorizedError(ErrorCodes.AUTH.USER_NOT_FOUND);
     if (!user.isActive) throw new UnauthorizedError(ErrorCodes.AUTH.ACCOUNT_BLOCKED);
 
+    // console.log(`1. USER ID: ${user._id}`)
+    // console.log(`2. USER NAME: ${user.name}`)
     req.auth = { user, session }
     next()
 })

@@ -11,6 +11,7 @@ export const signup = utils.asyncHandler(async (req, res) => {
 
 export const login = utils.asyncHandler(async (req, res) => {
 
+    // console.log('LOGIN BODY IN AUTH CONTROLLER: ', JSON.stringify(req?.body, null, 2))
     const { user, accessToken, refreshToken } = await authServices.login({ body: req.body, userAgent: req.get('User-Agent'), ipAddress: req.ip || req.get('X-Forwarded-For') || req.socket.remoteAddress })
 
     res.status(200).cookie('refreshToken', refreshToken, constants.COOKIE_OPTIONS).json(new utils.ApiResponse(200, { user, accessToken }, 'login successfull'))

@@ -44,6 +44,8 @@ export const ErrorCodes = Object.freeze({
         FOOD_NOT_FOUND: "Food not found.",
         FOOD_NOT_AVAILABLE: "Food is currently unavailable.",
         VARIANT_NOT_FOUND: "Food variant not found.",
+        VARIANT_NOT_ACTIVE: "Food variant is not active or deleted.",
+        FOOD_NOT_ACTIVE: "Food is not active or deleted.",
         OUT_OF_STOCK: "Requested quantity is not available."
     },
 
