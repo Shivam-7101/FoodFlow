@@ -163,6 +163,7 @@ export const updateFood = async ({ restaurantId, foodId, foodBody, files }) => {
         await utils.cloudinary.deleteMany(imagesToBeDeleted)
     }
 
+    await utils.cache.invalidateFood({ foodId: updatedFoodDetails._id })
     return { food: mapper.foodMapper(updatedFoodDetails), variants }
 }
 
@@ -203,65 +204,15 @@ export const deleteFood = async ({ foodId }) => {
     } finally {
         await session.endSession()
     }
+    await utils.cache.invalidateFood({ foodId })
 }
 
 export const getFoodDetails = async ({ foodId }) => {
 
-    const food = await Food.aggregate([
-        {
-            $match: {
-                _id: new mongoose.Types.ObjectId(foodId),
-                isActive: true
-            }
-        },
-        {
-            $lookup: {
-                let: {
-                    foodId: '$_id'
-                },
-                from: 'foodvariants',
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $eq: ['$foodId', '$$foodId']
-                            },
-                            isActive: true
-                        }
-                    },
-                    {
-                        $project: {
-                            _id: 1,
-                            foodId: 1,
-                            name: 1,
-                            attributes: 1,
-                            price: 1,
-                            stock: 1,
-                            isActive: 1
-                        }
-                    }
-                ],
-                as: 'variants'
-            }
-        },
-        {
-            $project: {
-                _id: 1,
-                restaurantId: 1,
-                isActive: 1,
-                category: 1,
-                name: 1,
-                description: 1,
-                images: 1,
-                isVeg: 1,
-                isAvailable: 1,
-                variants: 1
-            }
-        }
-    ])
+    const food = await utils.cache.getFood({ foodId })
 
-    if (!food.length) throw new NotFoundError(ErrorCodes.FOOD.FOOD_NOT_FOUND);
-    return food[0]
+    if (!food.status) throw new NotFoundError(ErrorCodes.FOOD.FOOD_NOT_FOUND);
+    return food
 }
 
 export const getFoods = async ({ pipeline }) => {
