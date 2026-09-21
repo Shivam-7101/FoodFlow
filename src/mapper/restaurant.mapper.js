@@ -15,6 +15,7 @@ export const restaurantMapper = (restaurantDocument) => {
         _id: restaurantDocument._id,
         rating: restaurantDocument.rating,
         status: restaurantDocument.status,
-        totalRatings: restaurantDocument.totalRatings
+        totalRatings: restaurantDocument.totalRatings,
+        tax:restaurantDocument.tax
     }
 }

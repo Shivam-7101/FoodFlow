@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { locationSchema } from './deliveryPartner.model.js'
 
 const addressSchema = new mongoose.Schema(
     {
@@ -27,6 +28,7 @@ const addressSchema = new mongoose.Schema(
             type: String,
             required: true,
             trim: true,
+            minLength: 1,
             maxlength: 200
         },
 
@@ -63,16 +65,31 @@ const addressSchema = new mongoose.Schema(
         isDefault: {
             type: Boolean,
             default: false
-        }
+        },
+        expiresAt:{
+            type:Date,
+            expires:0
+        },
+        location: locationSchema
     },
     {
         timestamps: true
     }
 );
 
+addressSchema.index(
+    { userId: 1, isDefault: 1 },
+    {
+        unique: true,
+        partialFilterExpression: { isDefault: true }
+    }
+);
+
 addressSchema.index({
     userId: 1,
-    isDefault: 1
-});
+    addressLine1: 1,
+    city: 1,
+    state: 1
+}, { unique: true });
 
 export const Address = mongoose.model("Address", addressSchema);

@@ -1,7 +1,7 @@
 import { createCache } from 'async-cache-dedupe'
 import superjson from 'superjson'
 import { redis } from './redis.js'
-import { Food, Restaurant, Cart } from '../models/index.js'
+import { Food, Restaurant, Cart, Address } from '../models/index.js'
 import mongoose, { isValidObjectId } from 'mongoose'
 import { ErrorCodes, ValidationError } from '../errors/index.js'
 
@@ -23,14 +23,16 @@ export const cache = createCache({
     },
     // ✅ FIXED: Wrapped superjson in string parsers so it outputs valid strings to Redis
     transformer: {
-        serialize: (data) => JSON.stringify(superjson.serialize(data)),
-        deserialize: (data) => superjson.deserialize(JSON.parse(data))
+        serialize: (data) => superjson.serialize(data),
+        deserialize: (data) => superjson.deserialize(data)
+        // serialize: (data) => JSON.stringify(superjson.serialize(data)),
+        // deserialize: (data) => superjson.deserialize(JSON.parse(data))
     }
 });
 
 cache.define('getCart',
     {
-        ttl: (args, result) => {
+        ttl: (result, args) => {
             return result && result.status ? 150 : 0
         },
         // The signature receives (args, key, result)
@@ -65,6 +67,9 @@ cache.define('getCart',
 
 cache.define('getRestaurant',
     {
+        ttl: (result, args) => {
+            return result && result.status ? 150 : 0
+        },
         references: (args, key, result) => {
             // ✅ Safely extract the ID from the singular object payload
             if (result && result.status && result.data?._id) {
@@ -86,6 +91,9 @@ cache.define('getRestaurant',
 
 cache.define('getFood',
     {
+        ttl: (result, args) => {
+            return result && result.status ? 150 : 0
+        },
         references: (args, key, result) => {
             // ✅ FIXED: Changed item._id to result.data._id to stop it from returning "food:undefined"
             if (result && result.status && result.data?._id) {
@@ -155,3 +163,27 @@ cache.define('getFood',
         };
     }
 );
+
+cache.define('getAddress',
+    {
+        ttl: (result, args) => {
+            return result && result.status ? 150 : 0
+        },
+        references: (args, key, result) => {
+            // ✅ Safely extract the ID from the singular object payload
+            if (result && result.status && result.data?._id) {
+                return [`address:${result.data.userId.toString()}:${result.data._id.toString()}`];
+            }
+            return [];
+        }
+    },
+    async ({ userId }) => {
+        if (!isValidObjectId(userId)) throw new Error(`CACHE ERR: Invalid userId id`);
+
+        // Added .lean() to store plain objects rather than heavy Mongoose document instances
+        const address = await Address.findOne({ userId, isDefault: true }).lean();
+
+        if (!address) return { status: false, message: 'address not found.' };
+        return { status: true, message: 'restaurant details fetched successfully.', data: address };
+    }
+)

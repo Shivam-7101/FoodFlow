@@ -57,6 +57,7 @@ export const createRestaurant = async ({ userId, email, name, restaurantBody, fi
             status: 'PENDING',
             minimumOrderAmount: data.minimumOrderAmount,
             deliveryFee: data.deliveryFee,
+            tax: data.tax,
             ownerId: userId
         })
     })
@@ -114,6 +115,7 @@ export const updateRestaurant = async ({ userId, restaurantId, restaurantBody, f
                     minimumOrderAmount: data.minimumOrderAmount,
                     deliveryFee: data.deliveryFee,
                     logo: logo || restaurant.logo,
+                    tax: data.tax,
                     banner: banner || restaurant.banner,
                 }
             },

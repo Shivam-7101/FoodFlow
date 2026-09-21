@@ -18,7 +18,7 @@ const documentSchema = new mongoose.Schema(
     }
 );
 
-const locationSchema = new mongoose.Schema(
+export const locationSchema = new mongoose.Schema(
     {
         type: {
             type: String,

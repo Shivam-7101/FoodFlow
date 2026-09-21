@@ -77,15 +77,10 @@ const shippingAddressSchema = new mongoose.Schema(
 const summarySchema = new mongoose.Schema(
     {
         totalItems: Number,
-
         subtotal: Number,
-
         deliveryFee: Number,
-
         discount: Number,
-
         tax: Number,
-
         grandTotal: Number
     },
     {
@@ -128,13 +123,6 @@ const paymentSchema = new mongoose.Schema(
 
 const orderSchema = new mongoose.Schema(
     {
-        orderNumber: {
-            type: String,
-            required: true,
-            unique: true,
-            index: true
-        },
-
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
@@ -166,7 +154,6 @@ const orderSchema = new mongoose.Schema(
 
         payment: {
             type: paymentSchema,
-            required: true
         },
 
         shippingAddress: {

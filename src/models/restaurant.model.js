@@ -96,7 +96,12 @@ const restaurantSchema = new mongoose.Schema(
             type: restaurantAddressSchema,
             required: true
         },
-
+        tax: {
+            type: Number,
+            min: [0, 'Tax percentage cannot be negative'],
+            max: [100, 'Tax percentage cannot exceed 100%'],
+            required: true
+        },
         openingHours: {
             type: openingHoursSchema,
             required: true
@@ -156,6 +161,6 @@ restaurantSchema.index({
 restaurantSchema.index({
     rating: -1
 });
-restaurantSchema.index({userId:1,name:1},{unique:true,partialFilterExpression:{status:'ACTIVE'}})
+restaurantSchema.index({ userId: 1, name: 1 }, { unique: true, partialFilterExpression: { status: 'ACTIVE' } })
 
 export const Restaurant = mongoose.model("Restaurant", restaurantSchema);

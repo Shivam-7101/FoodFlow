@@ -17,6 +17,7 @@ export const createRestaurant = z.object({
         open: z.string().trim().min(1, { error: 'opening time is an required field' }),
         close: z.string().trim().min(1, { error: 'closing time is an required field' }),
     }),
+    tax: z.coerce.number().min(0).max(100),
     minimumOrderAmount: z.coerce.number().min(1),
     deliveryFee: z.coerce.number().min(1),
 })
