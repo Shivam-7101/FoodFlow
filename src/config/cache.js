@@ -1,9 +1,9 @@
 import { createCache } from 'async-cache-dedupe'
 import superjson from 'superjson'
 import { redis } from './redis.js'
-import { Food, Restaurant, Cart, Address } from '../models/index.js'
+import { Food, Restaurant, Cart, Address, Order } from '../models/index.js'
 import mongoose, { isValidObjectId } from 'mongoose'
-import { ErrorCodes, ValidationError } from '../errors/index.js'
+import { BadRequestError, ErrorCodes, ValidationError } from '../errors/index.js'
 
 export const cache = createCache({
     ttl: 150,
@@ -185,5 +185,30 @@ cache.define('getAddress',
 
         if (!address) return { status: false, message: 'address not found.' };
         return { status: true, message: 'restaurant details fetched successfully.', data: address };
+    }
+)
+
+cache.define('getOrder',
+    {
+        ttl: (result) => {
+            return result && result.status ? 150 : 0
+        },
+        references: (args, key, result) => {
+            if (result && result.status && result.data?._id) {
+                return [`order:${result.data._id.toString()}`]
+            }
+            return []
+        }
+    },
+    async ({ orderId }) => {
+
+        if (!isValidObjectId(orderId)) throw new BadRequestError(`CACHE ERR: invalid order id.`);
+        
+        const order = await Order.findById(orderId).lean()
+
+        if (order) {
+            return { status: true, data: order, message: 'order details fetched successfully.' }
+        }
+        return { status: false, message: 'order not found.' }
     }
 )

@@ -1,6 +1,7 @@
 import dotenv from 'dotenv/config'
-import { app } from './src/app.js'
+import { httpServer } from './src/app.js'
 import { connectDB } from './src/config/db.js'
+import { startWebSocketServer } from './src/config/ws.js'
 
 const startServer = async () => {
 
@@ -8,7 +9,8 @@ const startServer = async () => {
 
     try {
         await connectDB()
-        app.listen(PORT, () => console.log(`LISTENING ON PORT: ${PORT}`))
+        httpServer.listen(PORT, () => console.log(`LISTENING ON PORT: ${PORT}`))
+        startWebSocketServer({ httpServer })
     } catch (error) {
         console.log(`FAILED TO START SERVER`)
         process.exit(1)

@@ -24,17 +24,14 @@ export const ORDER_STATUS = Object.freeze({
 
 export const PAYMENT_STATUS = Object.freeze({
     PENDING: "PENDING",
-
     SUCCESS: "SUCCESS",
-
     FAILED: "FAILED",
-
-    REFUNDED: "REFUNDED"
+    REFUNDED: "REFUNDED",
+    PROCESSING: "PROCESSING"
 });
 
 export const PAYMENT_METHOD = Object.freeze({
     COD: "COD",
-
     ONLINE: "ONLINE"
 });
 

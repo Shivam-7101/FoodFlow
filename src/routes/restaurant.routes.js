@@ -13,3 +13,7 @@ restaurantRouter.patch('/:id', authenticate, authorizeRoles('RESTAURANT_OWNER'),
 restaurantRouter.delete('/:id', authenticate, authorizeRoles('RESTAURANT_OWNER'), restaurantController.deleteRestaurant)
 
 restaurantRouter.get('/:id', authenticate, authorizeRoles('RESTAURANT_OWNER'), restaurantController.getRestaurant)
+
+restaurantRouter.patch('/:id/open', authenticate, authorizeRoles('RESTAURANT_OWNER'), restaurantController.setRestaurantStatusToOpen)
+
+restaurantRouter.patch('/:id/close', authenticate, authorizeRoles('RESTAURANT_OWNER'), restaurantController.setRestaurantStatusToClose)

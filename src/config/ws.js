@@ -1,108 +1,170 @@
 import { Server } from 'socket.io'
 import ms from 'ms'
 import * as utils from '../utils/index.js'
-import { Session, User, DeliveryPartner } from '../models/index.js'
+import { Session, User, DeliveryPartner, Restaurant } from '../models/index.js'
+import { ErrorCodes, ForbiddenError, NotFoundError, UnauthorizedError, InternalServerError } from '../errors/index.js'
+import * as constants from '../constants.js'
+import { EventEmitter } from 'events'
 
-const isAuthorized = function (packet, next) {
-    const [eventName] = packet
-    const socket = this
-    const userRole = socket.auth?.user?.role
-
-    switch (eventName) {
-        case 'deliveryPartner:location:update':
-        case 'deliveryPartner:order:accept':
-        case 'deliveryPartner:order:complete':
-            if (userRole !== 'DELIVERY_PARTNER') return next(new Error("FORBIDDEN ERROR: ROLE MUST BE DELIVERY PARTNER TO PERFORM THESE ACTIONS"));
-
-            break;
-
-        default:
-            break;
-    }
-    next()
-};
+export const SOCKET_EVENTS = {
+    RESTAURANT_STATUS_OPEN: 'restaurant:status:open',
+    RESTAURANT_STATUS_OPEN_ACK: 'restaurant:status:open:ack',
+    NEW_ORDER: 'restaurant:order:new',
+    NEW_ORDER_TRIGGER: 'order:new:trigger',
+}
 
 const authenticate = async (socket, next) => {
+
+    // console.log('SOCKET', socket)
+    // console.log('SOCKET HANDSHAKE', socket.handshake)
+    // console.log('SOCKET HANDSHAKE HEADERS', socket.handshake.headers)
+    // console.log('SOCKET HEADERS', socket.headers)
     try {
-        const incomingAccessToken = socket.handshake.auth.token
-        const payload = utils.tokens.verifyAccessToken(incomingAccessToken)
-        if (!payload) return next(new Error('NOT AUTHORIZED'));
+        const accessToken = socket.handshake.headers?.["authorization"]?.split(' ')[1]
 
-        // Optimization: Use parallel queries and .lean() for faster lookups
-        const [session, user] = await Promise.all([
-            Session.findOne({ _id: payload.sessionId, isValid: true }).lean(),
-            User.findById(payload.userId).lean()
-        ]);
-
-        if (!session) return next(new Error('SESSION IS INVALID OR NOT FOUND'));
-        if (session.userId.toString() !== payload.userId.toString()) return next(new Error('INVALID ACCESS TOKEN'));
-
-        if (!user) return next(new Error('ACCOUNT NOT FOUND'));
-        if (!user.isActive) return next(new Error('ACCOUNT BLOCKED BY FOODFLOW'));
-        if (!user.isVerified) return next(new Error('ACCOUNT NOT VERIFIED'));
-
-        // FIX: Assignments must happen inside the block where 'user' and 'payload' exist
-        socket.auth = {
-            user,
-            deliveryPartnerId: socket.handshake.auth?.deliveryPartnerId || null
+        console.log('ACCESS TOKEN: ', accessToken)
+        const payload = utils.tokens.verifyAccessToken(accessToken)
+        console.log('ACCESS TOKEN PAYLOAD: ', payload)
+        if (!payload) {
+            console.error('WS ERR: Invalid access token.')
+            return next(new UnauthorizedError(ErrorCodes.AUTH.INVALID_ACCESS_TOKEN));
         }
-        socket.tokenExpiry = payload.exp
 
+        const session = await Session.findOne({
+            _id: payload.sessionId,
+            isValid: true
+        })
+        if (!session) {
+            return next(new UnauthorizedError(ErrorCodes.SESSION.SESSION_NOT_FOUND))
+        }
+        if (session.userId.toString() !== payload.userId.toString()) {
+            return next(new UnauthorizedError(ErrorCodes.AUTH.INVALID_ACCESS_TOKEN));
+        }
+
+        const user = await User.findById(session.userId)
+        if (!user) {
+            return next(new UnauthorizedError(ErrorCodes.AUTH.USER_NOT_FOUND))
+        }
+        if (!user.isActive) {
+            return next(new UnauthorizedError(ErrorCodes.AUTH.ACCOUNT_BLOCKED));
+        }
+        socket.auth = { user, session }
         next()
     } catch (error) {
-        return next(new Error(`SOMETHING WENT WRONG: ${error.message || error}`))
+        const message = error.message || error
+        console.error('WS Auth Middleware Crash:', error.message);
+        next(new InternalServerError(error));
     }
 }
 
-const connectClientToSocketIoServer = async (socket, next) => {
+const authorise = async function ([event, args], next) {
+
+    const socket = this
     try {
-        switch (socket.auth?.user?.role) {
-            case 'DELIVERY_PARTNER':
-                if (!socket.auth.deliveryPartnerId) return next(new Error('DELIVERY PARTNER ID NOT FOUND'));
+        switch (event) {
+            case SOCKET_EVENTS.RESTAURANT_STATUS_OPEN:
 
-                const deliveryPartner = await DeliveryPartner.findByIdAndUpdate(
-                    socket.auth.deliveryPartnerId,
-                    { $set: { isOnline: true } },
-                    { returnDocument: 'after' }
-                )
-
-                if (!deliveryPartner) {
-                    const isDeliveryPartnerExists = await DeliveryPartner.findById(socket.auth.deliveryPartnerId)
-                    if (!isDeliveryPartnerExists) return next(new Error('DELIVERY PARTNER ACCOUNT NOT FOUND'));
-                    if (!isDeliveryPartnerExists.isOnline) return next(new Error("SOMETHING WENT WRONG: CAN'T UPDATE ONLINE STATUS OF DELIVERY PARTNER"));
+                if (!args || typeof args !== 'object' || !args.restaurantId) {
+                    socket.disconnect(true);
+                    return next(new BadRequestError("Missing restaurantId parameter."));
                 }
+
+                if (socket.auth.user.role !== constants.USER_ROLE.RESTAURANT_OWNER) {
+                    socket.disconnect()
+                    return next(new UnauthorizedError(ErrorCodes.ROLE.UNAUTHORIZED_ROLE))
+                }
+
+                const restaurantFromCache = await utils.cache.getRestaurant({ restaurantId: args.restaurantId })
+                if (!restaurantFromCache.status) {
+                    socket.disconnect()
+                    return next(new NotFoundError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_FOUND))
+                }
+                const restaurant = restaurantFromCache.data
+
+                if (!restaurant.isActive) {
+                    socket.disconnect()
+                    return next(new ForbiddenError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_ACTIVE))
+                }
+                if (!restaurant.isOpen) {
+                    socket.disconnect()
+                    return next(new ForbiddenError(ErrorCodes.RESTAURANT.RESTAURANT_CLOSED))
+                }
+
+                socket.restaurant = restaurant
                 break;
 
             default:
                 break;
         }
+
         next()
     } catch (error) {
-        return next(new Error(`SERVER ERROR IN CONNECTION MIDDLEWARE: ${error.message}`));
+        console.error("WS Packet Authorisation Failure:", error);
+        socket.disconnect(true);
+        next(new InternalServerError("Internal validation failure."));
     }
 }
 
-export const startWebSocketServer = ({ httpServer }) => {
-    const io = new Server(httpServer, {
-        path: '/ws',
-        pingInterval: ms('1m'),
-        pingTimeout: ms('3m'),
-        connectionStateRecovery: {
-            skipMiddlewares: false,
-            maxDisconnectionDuration: ms('5m')
-        }
+const joinRestaurantRoom = async function (args) {
+
+    const socket = this
+    await socket.join(`restaurant:${socket.restaurant._id}`)
+    socket.emit(SOCKET_EVENTS.RESTAURANT_STATUS_OPEN_ACK, {
+        success: true,
+        message: `Listening to order stream for ${socket.restaurant.name}`
     })
+    console.log(`Restaurant ${socket.restaurant.name} is now online and listening to its room.`);
+}
+
+let io = null;
+export const startWebSocketServer = ({ httpServer }) => {
+
+    io = new Server(httpServer, {
+        path: '/ws',
+        connectionStateRecovery: {
+            maxDisconnectionDuration: ms('1h'),
+            skipMiddlewares: false
+        },
+        pingInterval: ms('25s'),
+        pingTimeout: ms('20s')
+    });
 
     io.use(authenticate)
-    io.use(connectClientToSocketIoServer)
+
 
     io.on('connection', (socket) => {
-        console.log(`${socket.auth.user.name} connected.`)
+        console.log(`WS: User connected: ${socket.auth.user.name}`)
 
-        socket.use(isAuthorized.bind(socket))
+        socket.use(authorise.bind(socket))
 
-        socket.on('error', (err) => {
-            socket.emit('socket:error', { message: err.message });
-        });
+        socket.on(SOCKET_EVENTS.RESTAURANT_STATUS_OPEN, joinRestaurantRoom.bind(socket))
+
+    })
+
+    io.on('disconnect', (socket) => {
+        console.log(`WS: User disconnected: ${socket.auth.user.name}`)
+    })
+    io.on('error', (error) => {
+        console.error('WS Error:', error);
     })
 }
+
+class WsEventEmitter extends EventEmitter {
+
+    constructor() {
+        super()
+        this.registerListeners()
+    }
+
+    registerListeners() {
+        this.on(SOCKET_EVENTS.NEW_ORDER_TRIGGER, ({ restaurantId, orderId, orderItems }) => {
+            if (!io) {
+                console.error('ORDER REQUEST: socket.io server is not initialized yet')
+                return;
+            }
+            io.to(`restaurant:${restaurantId}`).emit(SOCKET_EVENTS.NEW_ORDER, { orderId, orderItems })
+        })
+    }
+}
+
+export const wsEventEmitter = new WsEventEmitter()

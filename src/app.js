@@ -11,9 +11,12 @@ import { deliveryPartnerRouter } from './routes/deliveryPartner.routes.js'
 import { cartRouter } from './routes/cart.routes.js'
 import { addressRouter } from './routes/address.routes.js'
 import { orderRoutes } from './routes/order.routes.js'
+import { paymentRouter } from './routes/payments.routes.js'
 import * as utils from './utils/index.js'
+import { createServer } from 'http'
 
 const app = express()
+const httpServer = createServer(app)
 
 app.use(helmet());
 app.use(cors({
@@ -22,7 +25,13 @@ app.use(cors({
     credentials: process.env.CORS_CREDENTIALS === 'true'
 }))
 app.use(cookieParser())
-app.use(express.json())
+app.use(express.json({
+    verify: (req, res, buf) => {
+        if (buf && buf.length) {
+            req.rawBody = buf
+        }
+    }
+}))
 app.use(express.urlencoded({ extended: true }))
 app.use('/api/v1/auth', authRouter)
 app.use('/api/v1/restaurants', restaurantRouter)
@@ -32,7 +41,8 @@ app.use('/api/v1/deliveryPartners', deliveryPartnerRouter)
 app.use('/api/v1/cart', cartRouter)
 app.use('/api/v1/addresses', addressRouter)
 app.use('/api/v1/orders', orderRoutes)
+app.use('/api/v1/payments', paymentRouter)
 
 app.use(errorMiddleware)
 
-export { app }
+export { httpServer }

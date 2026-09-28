@@ -103,7 +103,9 @@ const paymentSchema = new mongoose.Schema(
         },
 
         provider: {
-            type: String
+            type: String,
+            enum: Object.values(constants.PAYMENT_PROVIDER),
+            default: null
         },
 
         providerOrderId: {

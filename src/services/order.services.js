@@ -4,11 +4,13 @@ import * as utils from '../utils/index.js'
 import { FoodVariant, Order } from '../models/index.js'
 import { ErrorCodes, ForbiddenError, NotFoundError, ValidationError, BadRequestError } from '../errors/index.js'
 import mongoose from 'mongoose'
+import * as constants from '../constants.js'
+import { ORDER_EVENTS, orderEventsEmitter } from '../events/order.js'
 
 export const createOrder = async ({ user, body }) => {
 
     body.coordinates = JSON.parse(body.coordinates)
-    const result = addressValidation.address.safeParse(body)
+    const result = orderValidation.address.safeParse(body)
     if (!result.success) throw new ValidationError(`ORDER VALIDATION ERR: ${result.error.issues.map(issue => issue.message).join(', ')}`);
 
     const cart = await utils.cache.getCart({ userId: user._id })
@@ -35,6 +37,12 @@ export const createOrder = async ({ user, body }) => {
         location: {
             coordinates: result.data.coordinates
         }
+    }
+
+    const payment = {
+        method: result.data.paymentMethod,
+        provider: result.data.paymentMethod === 'COD' ? null : constants.PAYMENT_PROVIDER.RAZORPAY,
+        status: constants.PAYMENT_STATUS.PENDING
     }
 
     for (let i = 0; i < cartItems.length; i++) {
@@ -100,7 +108,7 @@ export const createOrder = async ({ user, body }) => {
     let createdOrder = null
     const session = await mongoose.startSession()
     try {
-        await session.withTransaction(async () => {
+        const orderFromTransaction = await session.withTransaction(async () => {
 
             const bulkWriteResult = await FoodVariant.bulkWrite(foodVariantsBulkOperations, { session })
 
@@ -114,11 +122,26 @@ export const createOrder = async ({ user, body }) => {
                 items: foodItemsToBeOrder,
                 shippingAddress,
                 summary,
-                status: 'PENDING_PAYMENT'
+                payment,
+                status: result.data.paymentMethod === 'COD' ? constants.ORDER_STATUS.PLACED : constants.ORDER_STATUS.PENDING_PAYMENT
             }], { session })
 
             createdOrder = order[0]
+
+            if (result.data.paymentMethod === 'COD') {
+                return createdOrder
+            }
         })
+
+        if (orderFromTransaction) {
+            orderEventsEmitter.emit(ORDER_EVENTS.SEND_ORDER_REQUEST_TO_RESTAURANT, {
+                restaurantId: orderFromTransaction.restaurantId,
+                orderId: orderFromTransaction._id,
+                orderItems: orderFromTransaction.items
+            })
+
+            return { order: orderFromTransaction }
+        }
     } catch (error) {
 
         const message = error instanceof Error ? error.message : error
@@ -130,8 +153,20 @@ export const createOrder = async ({ user, body }) => {
     }
 
     try {
-        const razorpayOrder = await utils.createRazorpayOrderWithSafety({ amount: createdOrder.summary.grandTotal, bulkOperation: reverseBulkOperation, orderId: createdOrder._id })
-        const updatedOrder = await Order.findByIdAndUpdate(createdOrder._id, { $set: { 'payment.providerOrderId': razorpayOrder.id } }, { returnDocument: 'after' })
+        const razorpayOrder = await utils.createRazorpayOrderWithSafety({
+            amount: createdOrder.summary.grandTotal,
+            bulkOperation: reverseBulkOperation,
+            orderId: createdOrder._id
+        })
+        const updatedOrder = await Order.findByIdAndUpdate(
+            createdOrder._id,
+            {
+                $set: {
+                    'payment.providerOrderId': razorpayOrder.id
+                }
+            },
+            { returnDocument: 'after' }
+        )
 
         // console.log('RAZORPAY ORDER IN SERVICES: ', razorpayOrder)
 

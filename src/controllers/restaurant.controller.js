@@ -33,11 +33,30 @@ export const deleteRestaurant = utils.asyncHandler(async (req, res) => {
 export const getRestaurant = utils.asyncHandler(async (req, res) => {
 
     console.log(`RESTAURANT ID: ${req.params?.id}`)
-    console.log(`USER ID: ${ req.auth.user._id}`)
+    console.log(`USER ID: ${req.auth.user._id}`)
     const restaurant = await restaurantServices.getRestaurant({
         userId: req.auth.user._id,
         restaurantId: req.params?.id
     })
 
     res.status(200).json(new utils.ApiResponse(200, { restaurant }, 'restaurant details fetched successfully.'))
+})
+
+export const setRestaurantStatusToOpen = utils.asyncHandler(async (req, res) => {
+
+    const restaurant = await restaurantServices.setRestaurantStatusToOpen({
+        ownerId: req.auth.user._id,
+        restaurantId: req.params?.id
+    })
+
+    res.status(200).json(new utils.ApiResponse(200, { restaurant }, 'restaurant status set to open successfully.'))
+})
+
+export const setRestaurantStatusToClose= utils.asyncHandler(async (req, res) => {
+
+    const restaurant = await restaurantServices.setRestaurantStatusToClose({
+        ownerId: req.auth.user._id,
+        restaurantId: req.params?.id
+    })
+    res.status(200).json(new utils.ApiResponse(200, { restaurant }, 'restaurant status set to close successfully.'))
 })
