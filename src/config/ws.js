@@ -9,8 +9,16 @@ import { EventEmitter } from 'events'
 export const SOCKET_EVENTS = {
     RESTAURANT_STATUS_OPEN: 'restaurant:status:open',
     RESTAURANT_STATUS_OPEN_ACK: 'restaurant:status:open:ack',
+    USER_JOIN: 'user:join:room',
+    USER_JOIN_ACK: 'user:join:room:ack',
     NEW_ORDER: 'restaurant:order:new',
     NEW_ORDER_TRIGGER: 'order:new:trigger',
+    ORDER_ACCEPTED: 'restaurant:order:accepted',
+    ORDER_ACCEPTED_ACK: 'user:order:accepted:ack',
+    ORDER_REJECTED: 'restaurant:order:rejected',
+    ORDER_REJECTED_ACK: 'user:order:rejected:ack',
+    ORDER_PREPARING: 'restaurant:order:preparing',
+    ORDER_PREPARING_ACK: 'user:order:preparing:ack',
 }
 
 const authenticate = async (socket, next) => {
@@ -116,6 +124,16 @@ const joinRestaurantRoom = async function (args) {
     console.log(`Restaurant ${socket.restaurant.name} is now online and listening to its room.`);
 }
 
+const joinUserRoom = async function (args) {
+
+    const socket = this
+    await socket.join(`user:${socket.auth.user._id}`)
+    socket.emit(SOCKET_EVENTS.USER_JOIN_ACK, {
+        success: true,
+        message: `${socket.auth.user.name} successfully connected to websocket server.`
+    })
+    console.log(`user ${socket.auth.user.name} connected to websocket server.`);
+}
 let io = null;
 export const startWebSocketServer = ({ httpServer }) => {
 
@@ -138,6 +156,7 @@ export const startWebSocketServer = ({ httpServer }) => {
         socket.use(authorise.bind(socket))
 
         socket.on(SOCKET_EVENTS.RESTAURANT_STATUS_OPEN, joinRestaurantRoom.bind(socket))
+        socket.on(SOCKET_EVENTS.USER_JOIN, joinUserRoom.bind(socket))
 
     })
 
@@ -163,6 +182,26 @@ class WsEventEmitter extends EventEmitter {
                 return;
             }
             io.to(`restaurant:${restaurantId}`).emit(SOCKET_EVENTS.NEW_ORDER, { orderId, orderItems })
+        })
+
+        this.on(SOCKET_EVENTS.ORDER_ACCEPTED, ({ orderId, userId }) => {
+            if (!io) {
+                return;
+            }
+            io.to(`user:${userId}`).emit(SOCKET_EVENTS.ORDER_ACCEPTED_ACK, { orderId })
+        })
+
+        this.on(SOCKET_EVENTS.ORDER_REJECTED, ({ orderId, userId }) => {
+            if (!io) {
+                return;
+            }
+            io.to(`user:${userId}`).emit(SOCKET_EVENTS.ORDER_REJECTED_ACK, { orderId })
+        })
+        this.on(SOCKET_EVENTS.ORDER_PREPARING, ({ orderId, userId }) => {
+            if (!io) {
+                return;
+            }
+            io.to(`user:${userId}`).emit(SOCKET_EVENTS.ORDER_PREPARING_ACK, { orderId })
         })
     }
 }

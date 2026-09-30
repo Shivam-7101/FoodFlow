@@ -1,10 +1,12 @@
-import { Restaurant, Food } from '../models/index.js'
+import { Restaurant, Food, Order } from '../models/index.js'
 import * as restaurantValidation from '../validators/restaurantValidation.js'
 import { BadRequestError, ConflictError, ErrorCodes, ForbiddenError, InternalServerError, NotFoundError, ValidationError } from '../errors/index.js'
 import * as utils from '../utils/index.js'
 import mongoose from 'mongoose'
 import * as mapper from '../mapper/index.js'
 import * as queue from '../queues/index.js'
+import * as constants from '../constants.js'
+import { RESTAURANT_EVENTS, restaurantEventEmitter } from '../events/restaurant.js'
 
 export const createRestaurant = async ({ userId, email, name, restaurantBody, files }) => {
 
@@ -258,4 +260,137 @@ export const setRestaurantStatusToClose = async ({ restaurantId, ownerId }) => {
     }
     await utils.cache.invalidateRestaurant({ restaurantId: restaurant._id })
     return mapper.restaurantMapper(restaurant)
+}
+
+export const acceptOrder = async ({ orderId }) => {
+
+    try {
+        let data = await Order.findOneAndUpdate(
+            {
+                _id: orderId,
+                status: 'PLACED'
+            },
+            {
+                $set: {
+                    status: constants.ORDER_STATUS.RESTAURANT_ACCEPTED
+                }
+            },
+            {
+                returnDocument: 'after'
+            }
+        )
+        if (!data) {
+            const isOrderAlreadyAccepted = await Order.findById(orderId)
+            if (!isOrderAlreadyAccepted) {
+                throw new NotFoundError(ErrorCodes.ORDER.ORDER_NOT_FOUND)
+            }
+            if (isOrderAlreadyAccepted.status !== constants.ORDER_STATUS.RESTAURANT_ACCEPTED) {
+                throw new InternalServerError(`FAILED TO ACCEPT ORDER`)
+            }
+            data = isOrderAlreadyAccepted
+        }
+
+        restaurantEventEmitter.emit(RESTAURANT_EVENTS.ORDER_ACCEPTED, { orderId: data._id, userId: data.userId })
+
+        return true
+    } catch (error) {
+        await Order.findByIdAndUpdate(
+            orderId,
+            {
+                $set: {
+                    status: constants.ORDER_STATUS.PLACED
+                }
+            }
+        )
+        throw error
+    }
+}
+
+export const rejectOrder = async ({ orderId }) => {
+    try {
+        let data = await Order.findOneAndUpdate(
+            {
+                _id: orderId,
+                status: 'PLACED'
+            },
+            {
+                $set: {
+                    status: constants.ORDER_STATUS.REJECTED
+                }
+            },
+            {
+                returnDocument: 'after'
+            }
+        )
+        if (!data) {
+            const isOrderAlreadyRejected = await Order.findById(orderId)
+            if (!isOrderAlreadyRejected) {
+                throw new NotFoundError(ErrorCodes.ORDER.ORDER_NOT_FOUND)
+            }
+            if (isOrderAlreadyRejected.status !== constants.ORDER_STATUS.REJECTED) {
+                throw new InternalServerError(`FAILED TO REJECT ORDER`)
+            }
+
+            data = isOrderAlreadyRejected
+        }
+
+        restaurantEventEmitter.emit(RESTAURANT_EVENTS.ORDER_REJECTED, { orderId: data._id, userId: data.userId })
+
+        return true
+    } catch (error) {
+        await Order.findByIdAndUpdate(
+            orderId,
+            {
+                $set: {
+                    status: constants.ORDER_STATUS.PLACED
+                }
+            }
+        )
+        throw error
+    }
+}
+
+export const preparingOrder = async ({ orderId }) => {
+    try {
+
+        let data = await Order.findOneAndUpdate(
+            {
+                _id: orderId,
+                status: 'RESTAURANT_ACCEPTED'
+            },
+            {
+                $set: {
+                    status: constants.ORDER_STATUS.PREPARING
+                }
+            },
+            {
+                returnDocument: 'after'
+            }
+        )
+        if (!data) {
+            const isOrderAlreadyPreparing = await Order.findById(orderId)
+            if (!isOrderAlreadyPreparing) {
+                throw new NotFoundError(ErrorCodes.ORDER.ORDER_NOT_FOUND)
+            }
+            if (isOrderAlreadyPreparing.status !== constants.ORDER_STATUS.PREPARING) {
+                throw new InternalServerError(`ORDER ERR: failed to set order status as preparing.`)
+            }
+
+            data = isOrderAlreadyPreparing
+        }
+
+        restaurantEventEmitter.emit(RESTAURANT_EVENTS.ORDER_PREPARING, { orderId: data._id, userId: data.userId })
+
+        return true
+    } catch (error) {
+        await Order.findByIdAndUpdate(
+            orderId,
+            {
+                $set: {
+                    status: constants.ORDER_STATUS.RESTAURANT_ACCEPTED
+                }
+            }
+        )
+        throw error
+    }
 }

@@ -17,3 +17,9 @@ restaurantRouter.get('/:id', authenticate, authorizeRoles('RESTAURANT_OWNER'), r
 restaurantRouter.patch('/:id/open', authenticate, authorizeRoles('RESTAURANT_OWNER'), restaurantController.setRestaurantStatusToOpen)
 
 restaurantRouter.patch('/:id/close', authenticate, authorizeRoles('RESTAURANT_OWNER'), restaurantController.setRestaurantStatusToClose)
+
+restaurantRouter.patch('/:orderId/accept', authenticate, authorizeRoles('RESTAURANT_OWNER'), restaurantController.acceptOrder)
+
+restaurantRouter.patch('/:orderId/reject', authenticate, authorizeRoles('RESTAURANT_OWNER'), restaurantController.rejectOrder)
+
+restaurantRouter.patch('/:orderId/prepare', authenticate, authorizeRoles('RESTAURANT_OWNER'), restaurantController.preparingOrder)

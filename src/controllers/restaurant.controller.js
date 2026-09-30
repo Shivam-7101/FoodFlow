@@ -1,5 +1,7 @@
 import * as utils from '../utils/index.js'
 import * as restaurantServices from '../services/restaurant.services.js'
+import { InternalServerError } from '../errors/InternalServerError.js'
+import { ErrorCodes } from '../errors/Errorcodes.js'
 
 export const createRestaurant = utils.asyncHandler(async (req, res) => {
 
@@ -52,11 +54,38 @@ export const setRestaurantStatusToOpen = utils.asyncHandler(async (req, res) => 
     res.status(200).json(new utils.ApiResponse(200, { restaurant }, 'restaurant status set to open successfully.'))
 })
 
-export const setRestaurantStatusToClose= utils.asyncHandler(async (req, res) => {
+export const setRestaurantStatusToClose = utils.asyncHandler(async (req, res) => {
 
     const restaurant = await restaurantServices.setRestaurantStatusToClose({
         ownerId: req.auth.user._id,
         restaurantId: req.params?.id
     })
     res.status(200).json(new utils.ApiResponse(200, { restaurant }, 'restaurant status set to close successfully.'))
+})
+
+export const acceptOrder = utils.asyncHandler(async (req, res) => {
+
+    const isAccepted = await restaurantServices.acceptOrder({ orderId: req.params.orderId })
+
+    if (!isAccepted) throw new InternalServerError(ErrorCodes.COMMON.SOMETHING_WENT_WRONG);
+
+    res.status(200).json(new utils.ApiResponse(200, { orderId: req.params.orderId }, 'order accepted successfully.'))
+})
+
+export const rejectOrder = utils.asyncHandler(async (req, res) => {
+
+    const isRejected = await restaurantServices.rejectOrder({ orderId: req.params.orderId })
+
+    if (!isRejected) throw new InternalServerError(ErrorCodes.COMMON.SOMETHING_WENT_WRONG);
+
+    res.status(200).json(new utils.ApiResponse(200, { orderId: req.params.orderId }, 'order rejected successfully.'))
+})
+
+export const preparingOrder = utils.asyncHandler(async (req, res) => {
+
+    const isPreparingOrder = await restaurantServices.preparingOrder({ orderId: req.params.orderId })
+
+    if (!isPreparingOrder) throw new InternalServerError(ErrorCodes.COMMON.SOMETHING_WENT_WRONG);
+
+    res.status(200).json(new utils.ApiResponse(200, { orderId: req.params.orderId }, 'order status successfully set to preparing.'))
 })
