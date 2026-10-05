@@ -381,7 +381,7 @@ export const preparingOrder = async ({ orderId }) => {
         }
 
         const restaurant = await utils.cache.getRestaurant({ restaurantId: data.restaurantId })
-        const job = await queue.findNearestDeliveryPartnerQueue.add(`match_driver_${data._id}`,
+        await queue.findNearestDeliveryPartnerQueue.add(`match_driver_${data._id}`,
             {
                 restaurantCoordinates: restaurant.data.address.location.coordinates,
                 orderId,
@@ -416,7 +416,7 @@ export const readyForPickup = async ({ orderId }) => {
         )
         if (!order) {
             const isOrderAlreadyReadyForPickup = await Order.findById(orderId)
-            if (!order) {
+            if (!isOrderAlreadyReadyForPickup) {
                 throw new NotFoundError(ErrorCodes.ORDER.ORDER_NOT_FOUND)
             }
             if (isOrderAlreadyReadyForPickup.status === constants.ORDER_STATUS.READY_FOR_PICKUP) {
@@ -427,7 +427,7 @@ export const readyForPickup = async ({ orderId }) => {
         }
 
         restaurantEventEmitter.emit(RESTAURANT_EVENTS.ORDER_READY_FOR_PICKUP, { orderId, userId: order.userId, deliveryPartnerId: order?.deliveryPartnerId?.toString() })
-
+        await utils.cache.invalidateOrder({ orderId })
         return true
 
     } catch (error) {
