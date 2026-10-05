@@ -2,6 +2,7 @@ import dotenv from 'dotenv/config'
 import { httpServer } from './src/app.js'
 import { connectDB } from './src/config/db.js'
 import { startWebSocketServer } from './src/config/ws.js'
+import {} from './src/workers/index.js'
 
 const startServer = async () => {
 

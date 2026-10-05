@@ -42,3 +42,31 @@ export const setDeliveryPartnerStatusToOffline = utils.asyncHandler(async (req, 
 
     res.status(200).json(new utils.ApiResponse(200, { deliveryPartner }, 'delivery partner status set to offline successfully.'))
 })
+
+export const acceptOrder = utils.asyncHandler(async (req, res) => {
+
+    const data = await deliveryPartnerServices.acceptOrder({ deliveryPartnerId: req.params.deliveryPartnerId, orderId: req.params.orderId })
+
+    res.status(data.success === true ? 200 : 409).json(new utils.ApiResponse(data.success === true ? 200 : 409, { orderId: req.params.orderId }, data.message))
+})
+
+export const pickUpOrder = utils.asyncHandler(async (req, res) => {
+
+    const data = await deliveryPartnerServices.pickUpOrder({ deliveryPartnerId: req.params.deliveryPartnerId, orderId: req.params.orderId })
+
+    res.status(data.success === true ? 200 : 409).json(new utils.ApiResponse(data.success === true ? 200 : 409, { orderId: req.params.orderId }, data.message))
+})
+
+export const outForDelivery = utils.asyncHandler(async (req, res) => {
+
+    const data = await deliveryPartnerServices.outForDelivery({ deliveryPartnerId: req.params.deliveryPartnerId, orderId: req.params.orderId })
+
+    res.status(data.success === true ? 200 : 409).json(new utils.ApiResponse(data.success === true ? 200 : 409, { orderId: req.params.orderId }, data.message))
+})
+
+export const orderDelivered = utils.asyncHandler(async (req, res) => {
+
+    const data = await deliveryPartnerServices.orderDelivered({ deliveryPartnerId: req.params.deliveryPartnerId, orderId: req.params.orderId })
+
+    res.status(data.success === true ? 200 : 409).json(new utils.ApiResponse(data.success === true ? 200 : 409, { orderId: req.params.orderId }, data.message))
+})

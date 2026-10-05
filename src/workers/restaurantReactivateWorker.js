@@ -5,7 +5,7 @@ import { ErrorCodes, BadRequestError, NotFoundError, ConflictError } from '../er
 import mongoose from 'mongoose'
 import * as queue from '../queues/index.js'
 
-const restaurantReactivateWorker = new Worker(
+export const restaurantReactivateWorker = new Worker(
     'restaurant-reactivate-queue',
     async (job) => {
         const { restaurantId } = job.data
@@ -33,7 +33,7 @@ const restaurantReactivateWorker = new Worker(
                 let ownerId;
 
                 if (!restaurant) {
-                    const existingRestaurant = await Restaurant.findById()
+                    const existingRestaurant = await Restaurant.findById(restaurantId)
                     if (!existingRestaurant || existingRestaurant?.status !== 'ACTIVE') throw new NotFoundError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_FOUND);
 
                     ownerId = existingRestaurant.ownerId

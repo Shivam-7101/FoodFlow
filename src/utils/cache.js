@@ -20,6 +20,10 @@ export const getOrder = ({ orderId = null }) => {
     return cache.getOrder({ orderId })
 }
 
+export const getDeliveryPartner = ({ deliveryPartnerId = null }) => {
+    return cache.getDeliveryPartner({ deliveryPartnerId })
+}
+
 export const invalidateCart = async ({ cartId }) => {
     await cache.invalidateAll(`cart:${cartId?.toString()}`)
 }
@@ -38,4 +42,8 @@ export const invalidateAddress = async ({ userId, addressId }) => {
 
 export const invalidateOrder = async ({ orderId }) => {
     cache.invalidateAll(`order:${orderId.toString()}`)
+}
+
+export const invalidateDeliveryPartner = async ({ deliveryPartnerId }) => {
+    cache.invalidateAll(`deliveryPartner:${deliveryPartnerId.toString()}`)
 }

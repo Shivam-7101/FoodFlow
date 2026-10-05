@@ -3,8 +3,12 @@ import * as utils from '../utils/index.js'
 import { wsEventEmitter, SOCKET_EVENTS } from '../config/ws.js'
 
 export const ORDER_EVENTS = {
-    REFUND_REQUESTED: 'order:refund_requested',
-    SEND_ORDER_REQUEST_TO_RESTAURANT: 'order:send_order_request_to_restaurant',
+    REFUND_REQUESTED: 'order:refund:requested',
+    SEND_ORDER_REQUEST_TO_RESTAURANT: 'order:send:request:restaurant',
+    SEND_ORDER_REQUEST_TO_DELIVERY_PARTNER: 'order:send:request:deliverypartner',
+    ORDER_PICKED_UP: 'order:status:pickedup',
+    ORDER_DELIVERED: 'order:status:delivered',
+    ORDER_OUT_FOR_DELIVERY: 'order:status:outfordelivery',
     ERROR: 'error',
     NEW_ORDER_TRIGGER: 'order:new:trigger',
 };
@@ -32,7 +36,23 @@ class OrderEventsEmitter extends EventEmitter {
         });
 
         this.on(ORDER_EVENTS.SEND_ORDER_REQUEST_TO_RESTAURANT, ({ restaurantId, orderId, orderItems }) => {
-            wsEventEmitter.emit(ORDER_EVENTS.NEW_ORDER_TRIGGER, { restaurantId, orderId, orderItems })
+            wsEventEmitter.emit(SOCKET_EVENTS.NEW_ORDER_TRIGGER, { restaurantId, orderId, orderItems })
+        })
+
+        this.on(ORDER_EVENTS.SEND_ORDER_REQUEST_TO_DELIVERY_PARTNER, ({ orderId, distance, deliveryPartnerId }) => {
+            wsEventEmitter.emit(SOCKET_EVENTS.DELIVERY_PARTNER_NEW_ORDER, { orderId, distance, deliveryPartnerId })
+        })
+
+        this.on(ORDER_EVENTS.ORDER_PICKED_UP, ({ userId, orderId }) => {
+            wsEventEmitter.emit(SOCKET_EVENTS.ORDER_PICKED_UP, { orderId, userId })
+        })
+
+        this.on(ORDER_EVENTS.ORDER_OUT_FOR_DELIVERY, ({ userId, orderId }) => {
+            wsEventEmitter.emit(SOCKET_EVENTS.ORDER_OUT_FOR_DELIVERY, { orderId, userId })
+        })
+
+        this.on(ORDER_EVENTS.ORDER_DELIVERED, ({ userId, orderId }) => {
+            wsEventEmitter.emit(SOCKET_EVENTS.ORDER_DELIVERED, { orderId, userId })
         })
     }
 }

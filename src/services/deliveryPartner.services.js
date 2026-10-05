@@ -1,10 +1,12 @@
 import * as deliveryPartnerValidation from '../validators/deliveryPartnerValidation.js'
-import { DeliveryPartner, User, Restaurant } from '../models/index.js'
+import { DeliveryPartner, User, Restaurant, Order } from '../models/index.js'
 import { emailQueue } from '../queues/emailQueue.js'
 import * as utils from '../utils/index.js'
 import { ErrorCodes, BadRequestError, ValidationError, NotFoundError, UnauthorizedError, ForbiddenError, InternalServerError, ConflictError } from '../errors/index.js'
 import * as mapper from '../mapper/index.js'
 import mongoose from 'mongoose'
+import * as constants from '../constants.js'
+import { ORDER_EVENTS, orderEventsEmitter } from '../events/order.js'
 
 export const createDeliveryPartner = async ({ body, files, user }) => {
 
@@ -71,7 +73,9 @@ export const createDeliveryPartner = async ({ body, files, user }) => {
     if (!result.success) throw new ValidationError(`Error: ${result.error.issues.map((issue) => issue.message).join(', ')}`);
 
     const data = result.data
-    if (!Object.keys(files).length !== 2) throw new BadRequestError(ErrorCodes.DELIVERY.INVALID_DOCUMENTS);
+    // console.log(`IMAGE FILES: `, files)
+    // console.log(`IMAGE FILES LENGTH: `, Object.keys(files).length)
+    if (Object.keys(files).length !== 2) throw new BadRequestError(ErrorCodes.DELIVERY.INVALID_DOCUMENTS);
 
     const deliveryPartner = await utils.withCloudinaryCleanup(async (trackUploads) => {
 
@@ -259,4 +263,140 @@ export const setDeliveryPartnerStatusToOffline = async ({ deliveryPartnerId, use
     }
 
     return mapper.deliveryPartnerMapper(deliveryPartner)
+}
+
+export const acceptOrder = async ({ deliveryPartnerId, orderId }) => {
+
+    // ✅CHECK THAT ORDER IS ALREADY ACCEPTED OR NOT IT IS CURRENTLY: ALLOWING ANOTHER DELIVERYPARTNER ACCEPT EVEN IF IT'S ALREADY ACCEPTED.
+    let order = await Order.findByIdAndUpdate(
+        orderId,
+        {
+            $set: {
+                deliveryPartnerId: deliveryPartnerId
+            }
+        },
+        {
+            returnDocument: 'after'
+        }
+    )
+    if (!order) {
+        const isOrderAlreadyAccepted = await Order.findById(orderId)
+        if (!isOrderAlreadyAccepted) {
+            throw new NotFoundError(ErrorCodes.ORDER.ORDER_NOT_FOUND);
+        }
+        if (isOrderAlreadyAccepted.deliveryPartnerId && isOrderAlreadyAccepted.deliveryPartnerId.toString() !== deliveryPartnerId?.toString()) {
+            return {
+                success: false,
+                message: 'order accepted by another delivery partner.'
+            }
+        }
+        throw new InternalServerError(ErrorCodes.COMMON.SOMETHING_WENT_WRONG);
+    }
+
+    return {
+        success: true,
+        message: 'order accepted successfully.'
+    }
+}
+
+export const pickUpOrder = async ({ deliveryPartnerId, orderId }) => {
+
+    let order = await Order.findOneAndUpdate(
+        {
+            _id: orderId,
+            deliveryPartnerId
+        },
+        {
+            $set: {
+                status: constants.ORDER_STATUS.PICKED_UP
+            }
+        },
+        {
+            returnDocument: 'after'
+        }
+    )
+    if (!order) {
+        const isOrderAlreadyPickedUp = await Order.findById(orderId)
+        if (!isOrderAlreadyPickedUp) {
+            throw new NotFoundError(ErrorCodes.ORDER.ORDER_NOT_FOUND);
+        }
+        if (isOrderAlreadyPickedUp.status === constants.ORDER_STATUS.PICKED_UP) {
+            order = isOrderAlreadyPickedUp
+        }
+        throw new InternalServerError(ErrorCodes.COMMON.SOMETHING_WENT_WRONG);
+    }
+
+    orderEventsEmitter.emit(ORDER_EVENTS.ORDER_PICKED_UP, { orderId, userId: order.userId })
+    return {
+        success: true,
+        message: 'order accepted successfully.'
+    }
+}
+
+export const outForDelivery = async ({ deliveryPartnerId, orderId }) => {
+
+    let order = await Order.findOneAndUpdate(
+        {
+            _id: orderId,
+            deliveryPartnerId
+        },
+        {
+            $set: {
+                status: constants.ORDER_STATUS.OUT_FOR_DELIVERY
+            }
+        },
+        {
+            returnDocument: 'after'
+        }
+    )
+    if (!order) {
+        const isOrderAlreadyOutForDelivery = await Order.findById(orderId)
+        if (!isOrderAlreadyOutForDelivery) {
+            throw new NotFoundError(ErrorCodes.ORDER.ORDER_NOT_FOUND);
+        }
+        if (isOrderAlreadyOutForDelivery.status === constants.ORDER_STATUS.OUT_FOR_DELIVERY) {
+            order = isOrderAlreadyOutForDelivery
+        }
+        throw new InternalServerError(ErrorCodes.COMMON.SOMETHING_WENT_WRONG);
+    }
+
+    orderEventsEmitter.emit(ORDER_EVENTS.ORDER_OUT_FOR_DELIVERY, { orderId, userId: order.userId })
+    return {
+        success: true,
+        message: 'order status set to "out for delivery" successfully.'
+    }
+}
+
+export const orderDelivered = async ({ deliveryPartnerId, orderId }) => {
+
+    let order = await Order.findOneAndUpdate(
+        {
+            _id: orderId,
+            deliveryPartnerId
+        },
+        {
+            $set: {
+                status: constants.ORDER_STATUS.DELIVERED
+            }
+        },
+        {
+            returnDocument: 'after'
+        }
+    )
+    if (!order) {
+        const isOrderAlreadyDelivered = await Order.findById(orderId)
+        if (!isOrderAlreadyDelivered) {
+            throw new NotFoundError(ErrorCodes.ORDER.ORDER_NOT_FOUND);
+        }
+        if (isOrderAlreadyDelivered.status === constants.ORDER_STATUS.DELIVERED) {
+            order = isOrderAlreadyDelivered
+        }
+        throw new InternalServerError(ErrorCodes.COMMON.SOMETHING_WENT_WRONG);
+    }
+
+    orderEventsEmitter.emit(ORDER_EVENTS.ORDER_DELIVERED, { orderId, userId: order.userId })
+    return {
+        success: true,
+        message: 'order delivered successfully.'
+    }
 }

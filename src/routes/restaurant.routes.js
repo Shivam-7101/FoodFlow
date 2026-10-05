@@ -23,3 +23,5 @@ restaurantRouter.patch('/:orderId/accept', authenticate, authorizeRoles('RESTAUR
 restaurantRouter.patch('/:orderId/reject', authenticate, authorizeRoles('RESTAURANT_OWNER'), restaurantController.rejectOrder)
 
 restaurantRouter.patch('/:orderId/prepare', authenticate, authorizeRoles('RESTAURANT_OWNER'), restaurantController.preparingOrder)
+
+restaurantRouter.patch('/:orderId/ready-for-pickup', authenticate, authorizeRoles('RESTAURANT_OWNER'), restaurantController.readyForPickup)

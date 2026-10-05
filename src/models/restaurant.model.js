@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { imageSchema } from "./imageSchema.js";
 import * as constants from '../constants.js'
+import { locationSchema } from './deliveryPartner.model.js'
 
 const restaurantAddressSchema = new mongoose.Schema(
     {
@@ -37,6 +38,10 @@ const restaurantAddressSchema = new mongoose.Schema(
             type: String,
             required: true,
             trim: true
+        },
+        location: {
+            type: locationSchema,
+            required: true
         }
     },
     {

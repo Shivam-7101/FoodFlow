@@ -89,3 +89,12 @@ export const preparingOrder = utils.asyncHandler(async (req, res) => {
 
     res.status(200).json(new utils.ApiResponse(200, { orderId: req.params.orderId }, 'order status successfully set to preparing.'))
 })
+
+export const readyForPickup = utils.asyncHandler(async (req, res) => {
+
+    const isPreparingOrder = await restaurantServices.readyForPickup({ orderId: req.params.orderId })
+
+    if (!isPreparingOrder) throw new InternalServerError(ErrorCodes.COMMON.SOMETHING_WENT_WRONG);
+
+    res.status(200).json(new utils.ApiResponse(200, { orderId: req.params.orderId }, 'order status successfully set to ready for pickup.'))
+})

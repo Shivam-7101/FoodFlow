@@ -1,17 +1,17 @@
 import { createCache } from 'async-cache-dedupe'
 import superjson from 'superjson'
 import { redis } from './redis.js'
-import { Food, Restaurant, Cart, Address, Order } from '../models/index.js'
+import { Food, Restaurant, Cart, Address, Order, DeliveryPartner } from '../models/index.js'
 import mongoose, { isValidObjectId } from 'mongoose'
 import { BadRequestError, ErrorCodes, ValidationError } from '../errors/index.js'
 
 export const cache = createCache({
     ttl: 150,
     // stale: 150,
-    onDedupe: (key) => console.log(`FUNCTION DEDUPLICATED: ${key}`),
-    onError: (error) => console.log(`CACHE ERROR: ${error}`),
-    onHit: (key) => console.log(`CACHE HIT FOR FUNCTION: ${key}`),
-    onMiss: (key) => console.log(`DATA NOT PRESENT IN CACHE. DB HIT FOR FUNCTION: ${key}`),
+    // onDedupe: (key) => console.log(`FUNCTION DEDUPLICATED: ${key}`),
+    // onError: (error) => console.log(`CACHE ERROR: ${error}`),
+    // onHit: (key) => console.log(`CACHE HIT FOR FUNCTION: ${key}`),
+    // onMiss: (key) => console.log(`DATA NOT PRESENT IN CACHE. DB HIT FOR FUNCTION: ${key}`),
     storage: {
         type: 'redis',
         options: {
@@ -40,7 +40,7 @@ cache.define('getCart',
             // ✅ FIXED: Safely verify status and extract the ID string cleanly
             if (result && result.status && result.data?._id) {
                 const referenceKey = `cart:${result.data._id.toString()}`;
-                console.log(`CART REFERENCE ASSIGNED: ${referenceKey}`);
+                // console.log(`CART REFERENCE ASSIGNED: ${referenceKey}`);
                 return [referenceKey];
             }
             return [];
@@ -50,7 +50,7 @@ cache.define('getCart',
         if (!isValidObjectId(userId)) throw new Error(`CACHE ERR: Invalid user id`);
 
         const cart = await Cart.findOne({ userId }).lean();
-        console.log('CART DETAILS AFTER HITTING DB: ', JSON.stringify(cart, null, 2));
+        // console.log('CART DETAILS AFTER HITTING DB: ', JSON.stringify(cart, null, 2));
 
         if (cart) {
             // Note: Returning lean objects rather than raw Mongoose hydration is highly recommended for caches
@@ -203,12 +203,37 @@ cache.define('getOrder',
     async ({ orderId }) => {
 
         if (!isValidObjectId(orderId)) throw new BadRequestError(`CACHE ERR: invalid order id.`);
-        
+
         const order = await Order.findById(orderId).lean()
 
         if (order) {
             return { status: true, data: order, message: 'order details fetched successfully.' }
         }
         return { status: false, message: 'order not found.' }
+    }
+)
+
+cache.define('getDeliveryPartner',
+    {
+        ttl: (result) => {
+            return result && result.status ? 150 : 0
+        },
+        references: (args, key, result) => {
+            if (result && result.status && result.data?._id) {
+                return [`deliveryPartner:${result.data._id.toString()}`]
+            }
+            return []
+        }
+    },
+    async ({ deliveryPartnerId }) => {
+
+        if (!isValidObjectId(deliveryPartnerId)) throw new BadRequestError(`CACHE ERR: invalid delivery partner id.`);
+
+        const deliveryPartner = await DeliveryPartner.findById(deliveryPartnerId).lean()
+
+        if (deliveryPartner) {
+            return { status: true, data: deliveryPartner, message: 'delivery partner details fetched successfully.' }
+        }
+        return { status: false, message: 'delivery partner not found.' }
     }
 )

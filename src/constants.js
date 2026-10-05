@@ -78,8 +78,10 @@ export const COOKIE_OPTIONS = {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
-    maxAge: ms(process.env.JWT_REFRESH_TOKEN_EXPIRY)
+    maxAge: ms(`${process.env.JWT_REFRESH_TOKEN_EXPIRY}`)
 }
+
+export const MAX_DISTANCE_TO_FIND_DELIVERY_PARTNER = 10
 
 export const FOOD_CATEGORY = ['NOODLES', 'BEVERAGES', 'PASTA', 'PIZZA', 'BURGER', 'ICE CREAMS', 'SWEETS', 'CHAPATIS', 'RICE', 'CURRY', 'SALAD']
 

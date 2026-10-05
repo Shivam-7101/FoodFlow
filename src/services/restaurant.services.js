@@ -31,7 +31,10 @@ export const createRestaurant = async ({ userId, email, name, restaurantBody, fi
         city: data.address.city,
         state: data.address.state,
         country: data.address.country,
-        postalCode: data.address.postalCode
+        postalCode: data.address.postalCode,
+        location: {
+            coordinates: data.address.coordinates
+        }
     }
     const openingHours = {
         open: data.openingHours.open,
@@ -83,6 +86,19 @@ export const updateRestaurant = async ({ userId, restaurantId, restaurantBody, f
     if (!restaurant) throw new NotFoundError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_FOUND);
     if (restaurant.status !== 'ACTIVE' || !restaurant.isActive) throw new BadRequestError(ErrorCodes.RESTAURANT.RESTAURANT_NOT_ACTIVE);
 
+    const address = {
+        addressLine1: data.address.addressLine1,
+        addressLine2: data.address?.addressLine2,
+        city: data.address.city,
+        state: data.address.state,
+        country: data.address.country,
+        postalCode: data.address.postalCode,
+        location: {
+            type: 'Point',
+            coordinates: data.address.coordinates
+        }
+    }
+
     const updatedRestaurant = await utils.withCloudinaryCleanup(async (trackUploads) => {
 
         let logo, banner;
@@ -112,7 +128,7 @@ export const updateRestaurant = async ({ userId, restaurantId, restaurantBody, f
                 $set: {
                     name: data.name,
                     description: data.description,
-                    address: data.address,
+                    address: address,
                     openingHours: data.openingHours,
                     minimumOrderAmount: data.minimumOrderAmount,
                     deliveryFee: data.deliveryFee,
@@ -122,7 +138,8 @@ export const updateRestaurant = async ({ userId, restaurantId, restaurantBody, f
                 }
             },
             {
-                returnDocument: 'after'
+                returnDocument: 'after',
+                runValidators: true
             }
         )
         if (!newlyUpdatedRestaurant) {
@@ -289,19 +306,11 @@ export const acceptOrder = async ({ orderId }) => {
             }
             data = isOrderAlreadyAccepted
         }
-
+        await utils.cache.invalidateOrder({ orderId })
         restaurantEventEmitter.emit(RESTAURANT_EVENTS.ORDER_ACCEPTED, { orderId: data._id, userId: data.userId })
 
         return true
     } catch (error) {
-        await Order.findByIdAndUpdate(
-            orderId,
-            {
-                $set: {
-                    status: constants.ORDER_STATUS.PLACED
-                }
-            }
-        )
         throw error
     }
 }
@@ -333,19 +342,11 @@ export const rejectOrder = async ({ orderId }) => {
 
             data = isOrderAlreadyRejected
         }
-
+        await utils.cache.invalidateOrder({ orderId })
         restaurantEventEmitter.emit(RESTAURANT_EVENTS.ORDER_REJECTED, { orderId: data._id, userId: data.userId })
 
         return true
     } catch (error) {
-        await Order.findByIdAndUpdate(
-            orderId,
-            {
-                $set: {
-                    status: constants.ORDER_STATUS.PLACED
-                }
-            }
-        )
         throw error
     }
 }
@@ -379,18 +380,57 @@ export const preparingOrder = async ({ orderId }) => {
             data = isOrderAlreadyPreparing
         }
 
+        const restaurant = await utils.cache.getRestaurant({ restaurantId: data.restaurantId })
+        const job = await queue.findNearestDeliveryPartnerQueue.add(`match_driver_${data._id}`,
+            {
+                restaurantCoordinates: restaurant.data.address.location.coordinates,
+                orderId,
+                userId: data.userId,
+                restaurantId: data.restaurantId,
+                radiusInKm: 2
+            }
+        )
+        // console.log(`DELIVERY_PARTNER_FINDING_JOB: `,job)
+        await utils.cache.invalidateOrder({ orderId })
         restaurantEventEmitter.emit(RESTAURANT_EVENTS.ORDER_PREPARING, { orderId: data._id, userId: data.userId })
 
         return true
     } catch (error) {
-        await Order.findByIdAndUpdate(
+        throw error
+    }
+}
+
+export const readyForPickup = async ({ orderId }) => {
+
+    try {
+        let order = await Order.findByIdAndUpdate(
             orderId,
             {
                 $set: {
-                    status: constants.ORDER_STATUS.RESTAURANT_ACCEPTED
+                    status: constants.ORDER_STATUS.READY_FOR_PICKUP
                 }
+            },
+            {
+                returnDocument: 'after'
             }
         )
+        if (!order) {
+            const isOrderAlreadyReadyForPickup = await Order.findById(orderId)
+            if (!order) {
+                throw new NotFoundError(ErrorCodes.ORDER.ORDER_NOT_FOUND)
+            }
+            if (isOrderAlreadyReadyForPickup.status === constants.ORDER_STATUS.READY_FOR_PICKUP) {
+                order = isOrderAlreadyReadyForPickup
+            } else {
+                throw new InternalServerError(ErrorCodes.COMMON.SOMETHING_WENT_WRONG)
+            }
+        }
+
+        restaurantEventEmitter.emit(RESTAURANT_EVENTS.ORDER_READY_FOR_PICKUP, { orderId, userId: order.userId, deliveryPartnerId: order?.deliveryPartnerId?.toString() })
+
+        return true
+
+    } catch (error) {
         throw error
     }
 }

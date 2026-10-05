@@ -11,7 +11,8 @@ export const createRestaurant = z.object({
         city: z.string().trim().min(1, { error: 'city is an required field' }),
         state: z.string().trim().min(1, { error: 'state is an required field' }),
         country: z.string().trim().min(1, { error: 'country is an required field' }),
-        postalCode: z.string().trim().min(1, { error: 'postal code is an required field' })
+        postalCode: z.string().trim().min(1, { error: 'postal code is an required field' }),
+        coordinates: z.array(z.coerce.number())
     }),
     openingHours: z.object({
         open: z.string().trim().min(1, { error: 'opening time is an required field' }),
@@ -19,5 +20,5 @@ export const createRestaurant = z.object({
     }),
     tax: z.coerce.number().min(0).max(100),
     minimumOrderAmount: z.coerce.number().min(1),
-    deliveryFee: z.coerce.number().min(1),
+    deliveryFee: z.coerce.number().min(1)
 })

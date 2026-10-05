@@ -15,3 +15,12 @@ export const deliveryPartnerReactivateQueue = new Queue('delivery-partner-reacti
         removeOnFail: true,
     },
 })
+
+export const findNearestDeliveryPartnerQueue = new Queue('delivery-routing-queue', {
+    connection: redis,
+    defaultJobOptions: {
+        attempts: 3,
+        removeOnComplete: true,
+        removeOnFail: true,
+    }
+})

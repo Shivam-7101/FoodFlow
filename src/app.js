@@ -46,3 +46,10 @@ app.use('/api/v1/payments', paymentRouter)
 app.use(errorMiddleware)
 
 export { httpServer }
+
+
+
+// "test": "echo \"Error: no test specified\" && exit 1",
+    // "dev:server": "nodemon server.js",
+        // "dev:worker": "nodemon src/workers/index.js",
+            // "dev": "concurrently \"npm run dev:server\" \"npm run dev:worker\""
