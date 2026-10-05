@@ -7,6 +7,7 @@ import * as mapper from '../mapper/index.js'
 import mongoose from 'mongoose'
 import * as constants from '../constants.js'
 import { ORDER_EVENTS, orderEventsEmitter } from '../events/order.js'
+import { success } from 'zod'
 
 export const createDeliveryPartner = async ({ body, files, user }) => {
 
@@ -267,8 +268,25 @@ export const setDeliveryPartnerStatusToOffline = async ({ deliveryPartnerId, use
 
 export const acceptOrder = async ({ deliveryPartnerId, orderId }) => {
 
-    // ✅CHECK THAT ORDER IS ALREADY ACCEPTED OR NOT IT IS CURRENTLY: ALLOWING ANOTHER DELIVERYPARTNER ACCEPT EVEN IF IT'S ALREADY ACCEPTED.
-    let order = await Order.findByIdAndUpdate(
+    const isOrderAlreadyAccepted = await utils.cache.getOrder({ orderId })
+    if (!isOrderAlreadyAccepted.status) {
+        throw new NotFoundError(ErrorCodes.ORDER.ORDER_NOT_FOUND);
+    }
+
+    if (isOrderAlreadyAccepted.data?.deliveryPartnerId) {
+        if (isOrderAlreadyAccepted.data.deliveryPartnerId?.toString() === deliveryPartnerId?.toString()) {
+            return {
+                success: true,
+                message: 'order already accepted.'
+            }
+        }
+        return {
+            success: false,
+            message: 'order accepted by another delivery partner.'
+        }
+    }
+
+    const order = await Order.findByIdAndUpdate(
         orderId,
         {
             $set: {
@@ -279,20 +297,14 @@ export const acceptOrder = async ({ deliveryPartnerId, orderId }) => {
             returnDocument: 'after'
         }
     )
-    if (!order) {
-        const isOrderAlreadyAccepted = await Order.findById(orderId)
-        if (!isOrderAlreadyAccepted) {
-            throw new NotFoundError(ErrorCodes.ORDER.ORDER_NOT_FOUND);
-        }
-        if (isOrderAlreadyAccepted.deliveryPartnerId && isOrderAlreadyAccepted.deliveryPartnerId.toString() !== deliveryPartnerId?.toString()) {
-            return {
-                success: false,
-                message: 'order accepted by another delivery partner.'
-            }
-        }
-        throw new InternalServerError(ErrorCodes.COMMON.SOMETHING_WENT_WRONG);
-    }
 
+    if (!order) {
+        return {
+            success: false,
+            message: 'order not found or accepted by another delivery partner.'
+        }
+    }
+    await utils.cache.invalidateOrder({ orderId })
     return {
         success: true,
         message: 'order accepted successfully.'
@@ -327,6 +339,7 @@ export const pickUpOrder = async ({ deliveryPartnerId, orderId }) => {
     }
 
     orderEventsEmitter.emit(ORDER_EVENTS.ORDER_PICKED_UP, { orderId, userId: order.userId })
+    await utils.cache.invalidateOrder({ orderId })
     return {
         success: true,
         message: 'order accepted successfully.'
@@ -361,6 +374,7 @@ export const outForDelivery = async ({ deliveryPartnerId, orderId }) => {
     }
 
     orderEventsEmitter.emit(ORDER_EVENTS.ORDER_OUT_FOR_DELIVERY, { orderId, userId: order.userId })
+    await utils.cache.invalidateOrder({ orderId })
     return {
         success: true,
         message: 'order status set to "out for delivery" successfully.'
@@ -395,6 +409,7 @@ export const orderDelivered = async ({ deliveryPartnerId, orderId }) => {
     }
 
     orderEventsEmitter.emit(ORDER_EVENTS.ORDER_DELIVERED, { orderId, userId: order.userId })
+    await utils.cache.invalidateOrder({ orderId })
     return {
         success: true,
         message: 'order delivered successfully.'
